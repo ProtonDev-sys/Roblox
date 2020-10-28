@@ -11,12 +11,7 @@ if not firetouchinterest then
     print("Your exploit is not supported!");
     return;
 end;
-getgenv().settings = {
-    ['UNIT'] = 'Mob'; -- string
-    ['LEVEL'] = '4'; -- string 
-    ['UPGLEVEL'] = 3; -- int
-    
-}
+
 
 local function getEnemey()
     local e = game.Workspace.Enemies:GetChildren();
