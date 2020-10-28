@@ -26,7 +26,6 @@ end);
 
 spawn(function()
 local plr = game.Players.LocalPlayer;
-local target = game.Players['SheetOfPaper2'];
 
 getgenv().on2  = true;
 
