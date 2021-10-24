@@ -2275,21 +2275,9 @@ local Teleports = {}
 local ActualTeleports = {}
 
 local function chat(text,colour)
-    Network.signal_alertChatMessage:Fire({
-        ["Color"] = colour,
-        ["Text"] = text,
-        ["Font"] = Enum.Font.GothamBold
-    })
+    return false
 end
 
-Sections.MiscRandom:Toggle("Announce toggles", true, function(Value)
-    Settings.Announce = Value 
-    if Value then 
-        chat("Announce toggles enabled.", Color3.new(0, 1, 0))
-    else
-        chat("Announce toggles disabled.", Color3.new(1, 0, 0)) 
-    end  
-end)
 --[[
 Sections.AutosellSettings:Toggle("Enable", false, function(Value)
     Settings.Autosell = Value
