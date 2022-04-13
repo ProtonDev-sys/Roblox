@@ -1360,7 +1360,7 @@
 	"dimensions": {
 		"sizeX": 54,
 		"sizeY": 63,
-		"startX": 150,
+		"startX": 49,
 		"startY": 137,
 		"bg": 2,
 		"ox1": 3,
