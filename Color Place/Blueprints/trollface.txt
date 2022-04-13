@@ -5,6 +5,6 @@
   "sizeY": 85,
   "startX": 216,
   "startY": 88,
-  "bg": 2
+  "bg": 1
 }
 }
