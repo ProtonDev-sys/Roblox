@@ -4531,7 +4531,7 @@
 		"sizeX": 71,
 		"sizeY": 85,
 		"startX": 120,
-		"startY": 385,
+		"startY": 305,
 		"bg": null,
 		"ox1": 0,
 		"ox2": 0,
