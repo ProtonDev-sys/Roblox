@@ -4,7 +4,7 @@
 "dimensions": {
   "sizeX": 54,
   "sizeY": 63,
-  "startX": 49,
+  "startX": 150,
   "startY": 137,
   "bg": 2,
   "ox1": 3,
