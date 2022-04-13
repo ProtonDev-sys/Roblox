@@ -4530,8 +4530,8 @@
 	"dimensions": {
 		"sizeX": 71,
 		"sizeY": 85,
-		"startX": 316,
-		"startY": 120,
+		"startX": 197,
+		"startY": 306,
 		"bg": null,
 		"ox1": 0,
 		"ox2": 0,
