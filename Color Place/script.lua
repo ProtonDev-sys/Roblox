@@ -35,11 +35,11 @@ local function buildBlueprint(name)
     local metadata = blueprintJSON['dimensions']
     local pixels = blueprintJSON['pixels']
     task.spawn(function()
-        --while wait(1) do
-        --    placePixel(pixels, metadata['sizeX'], metadata['sizeY'], metadata['startX'], metadata['startX'], metadata['ox1'], metadata['ox2'], metadata['oy1'], metadata['oy2'], metadata['bg'])
-        --end
+        while wait(1) do
+            placePixel(pixels, metadata['sizeX'], metadata['sizeY'], metadata['startX'], metadata['startX'], metadata['ox1'], metadata['ox2'], metadata['oy1'], metadata['oy2'], metadata['bg'])
+        end
 
-        previewPixel(pixels, metadata['sizeX'], metadata['sizeY'], metadata['startX'], metadata['startX'], metadata['ox1'], metadata['ox2'], metadata['oy1'], metadata['oy2'], metadata['bg'])
+        --previewPixel(pixels, metadata['sizeX'], metadata['sizeY'], metadata['startX'], metadata['startX'], metadata['ox1'], metadata['ox2'], metadata['oy1'], metadata['oy2'], metadata['bg'])
 
     end)
 end
