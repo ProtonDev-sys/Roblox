@@ -24,7 +24,7 @@ end
 
 local httpService = game:GetService("HttpService")
 
-local function buildBlueprint(name)
+function buildBlueprint(name)
     local blueprint
     if string.find(name,'.') then 
         blueprint = readfile(name)
