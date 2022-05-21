@@ -1,5 +1,5 @@
 # Roblox
 
-amazing crappy roblox scripts
+crappy roblox scripts
 
 > enjoy 
