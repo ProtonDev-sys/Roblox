@@ -54,9 +54,11 @@ end)
 tab1:addToggle("Autofarm",false,function(value) 
    getgenv().autofarm = value
 end)
-tab1:addToggle("Autosell",false,function(value)
-    getgenv().autosell = value
-end)
+if firetouchinterest then
+    tab1:addToggle("Autosell",false,function(value)
+        getgenv().autosell = value
+    end)
+end
 
 local tab2 = page1:addSection("Auto hatch")
 tab2:addDropdown("Select egg",getEggs(),function(selected) 
@@ -104,7 +106,7 @@ function pickup()
 end
 
 function sell()
-    if game:GetService("Workspace"):WaitForChild("Sell"):WaitForChild("Zone1") then
+    if game:GetService("Workspace"):WaitForChild("Sell"):WaitForChild("Zone1") and firetouchinterest then
         firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, game:GetService("Workspace").Sell.Zone1, 0)
         wait()
         firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, game:GetService("Workspace").Sell.Zone1, 1)
