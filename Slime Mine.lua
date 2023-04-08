@@ -50,9 +50,14 @@ end)
 tab1:addToggle("Autopickup",false,function(value)
     getgenv().autopickup = value
 end)
+
 tab1:addToggle("Autofarm",false,function(value) 
    getgenv().autofarm = value
 end)
+tab1:addToggle("Autosell",false,function(value)
+    getgenv().autosell = value
+end)
+
 local tab2 = page1:addSection("Auto hatch")
 tab2:addDropdown("Select egg",getEggs(),function(selected) 
     getgenv().egg = selected
@@ -98,6 +103,14 @@ function pickup()
     end
 end
 
+function sell()
+    if game:GetService("Workspace"):WaitForChild("Sell"):WaitForChild("Zone1") then
+        firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, game:GetService("Workspace").Sell.Zone1, 0)
+        wait()
+        firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, game:GetService("Workspace").Sell.Zone1, 1)
+    end
+end
+
 while true do 
     task.wait()
     if getgenv().autofarm and getgenv().area and getgenv().cooldown then 
@@ -110,10 +123,17 @@ while true do
                 v.CanCollide = false
                 task.wait(getgenv().cooldown/100)
                 pickup()
+                sell()
             end
         end
     end
     if getgenv().autopickup then 
         pickup()
     end
+    if getgenv().autosell then 
+        sell()
+    end 
 end
+
+
+
