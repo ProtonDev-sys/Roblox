@@ -24,6 +24,17 @@ function getEggs()
     return eggs 
 end 
 
+function getpets() 
+    for _,v in next, getgc(true) do 
+        if type(v) == 'table' and rawget(v,'petHandlers') then 
+            if v['player'] == game.Players.LocalPlayer then 
+                return v
+            end
+        end 
+    end    
+end
+
+
 local themes = {
     Background = Color3.fromRGB(24, 24, 24),
     Glow = Color3.fromRGB(0, 0, 0),
@@ -43,10 +54,6 @@ tab1:addDropdown("Select area",getAreas(),function(selected)
     end
 end)
 
-getgenv().cooldown = 40
-tab1:addSlider("Cooldown",40,0,500,function(value) 
-    getgenv().cooldown = value
-end)
 tab1:addToggle("Autopickup",false,function(value)
     getgenv().autopickup = value
 end)
@@ -54,11 +61,10 @@ end)
 tab1:addToggle("Autofarm",false,function(value) 
    getgenv().autofarm = value
 end)
-if firetouchinterest then
-    tab1:addToggle("Autosell",false,function(value)
-        getgenv().autosell = value
-    end)
-end
+
+tab1:addToggle("Autosell",false,function(value)
+    getgenv().autosell = value
+end)
 
 local tab2 = page1:addSection("Auto hatch")
 tab2:addDropdown("Select egg",getEggs(),function(selected) 
@@ -106,36 +112,40 @@ function pickup()
 end
 
 function sell()
-    if game:GetService("Workspace"):WaitForChild("Sell"):WaitForChild("Zone1") and firetouchinterest then
-        firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, game:GetService("Workspace").Sell.Zone1, 0)
-        wait()
-        firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, game:GetService("Workspace").Sell.Zone1, 1)
-    end
+    local cf = game:GetService("Workspace").Sell:WaitForChild("Zone1").CFrame
+    game:GetService("Workspace").Sell.Zone1.CFrame = game.Players.LocalPlayer.Character.PrimaryPart.CFrame
+    wait(1)
+    game:GetService("Workspace").Sell.Zone1.CFrame = cf
 end
 
-while true do 
-    task.wait()
-    if getgenv().autofarm and getgenv().area and getgenv().cooldown then 
+wait(2)
+local pets = getpets()
+while task.wait() do 
+    if getgenv().autofarm and getgenv().area then 
         for i,v in pairs(game.Workspace.Blocks:GetChildren()) do
-            if not getgenv().autofarm then 
-                break 
-            end
+            if not getgenv().autofarm then break end 
             if v.Name:sub(1,1) == getgenv().area then 
-                v.Position = game.Players.LocalPlayer.Character.HumanoidRootPart.Position
-                v.CanCollide = false
-                task.wait(getgenv().cooldown/100)
-                pickup()
-                sell()
+                repeat 
+                    task.wait()
+                    game.Players.LocalPlayer.Character.PrimaryPart.CFrame = v.CFrame
+                    v.CanCollide = false 
+                until not v or not v.Parent or v.Parent.Name ~= "Blocks" or not getgenv().autofarm 
+                task.spawn(function()
+                    pickup()
+                    sell()
+                end)
             end
         end
     end
-    if getgenv().autopickup then 
-        pickup()
+    if getgenv().autopickup and not getgenv().autofarm then 
+        task.spawn(function()
+            pickup()
+        end)
     end
-    if getgenv().autosell then 
-        sell()
+    if getgenv().autosell and not getgenv().autofarm then 
+        task.spawn(function()
+            sell()
+        end)
     end 
 end
-
-
 
