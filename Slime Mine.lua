@@ -58,6 +58,10 @@ tab1:addToggle("Autopickup",false,function(value)
     getgenv().autopickup = value
 end)
 
+tab1:addToggle("Legit Mode",false,function(value) 
+    getgenv().legit = value
+ end)
+
 tab1:addToggle("Autofarm",false,function(value) 
    getgenv().autofarm = value
 end)
@@ -120,22 +124,58 @@ end
 
 wait(2)
 local pets = getpets()
+
+function teleportFarm()
+    for i,v in pairs(game.Workspace.Blocks:GetChildren()) do
+        if not getgenv().autofarm then break end 
+        if v.Name:sub(1,1) == getgenv().area then 
+            repeat 
+                task.wait()
+                game.Players.LocalPlayer.Character.PrimaryPart.CFrame = v.CFrame
+                v.CanCollide = false 
+                warn("ok")
+            until not v or not v.Parent or v.Parent.Name ~= "Blocks" or not getgenv().autofarm 
+            task.spawn(function()
+                pickup()
+                sell()
+            end)
+        end
+    end
+end
+
+function closestBlock()
+    local closest, block = math.huge, nil
+    for _,v in next, workspace.Blocks:GetChildren() do 
+        if not getgenv().autofarm then break end 
+        if v.Name:sub(1,1) == getgenv().area then 
+            local dist = (game.Players.LocalPlayer.Character.PrimaryPart.Position-v.Position).magnitude 
+            if dist < closest and math.abs(game.Players.LocalPlayer.Character.PrimaryPart.Position.Y-v.Position.Y) < 14 then 
+                closest = dist 
+                block = v 
+            end 
+        end 
+    end
+    return block
+end
+
+function walkFarm()
+    local block = closestBlock()
+    if block then 
+        game.Players.LocalPlayer.Character.Humanoid:MoveTo(block.Position)
+        game.Players.LocalPlayer.Character.Humanoid.MoveToFinished:Wait()
+    end
+    pickup()
+    sell()
+end
+
 while task.wait() do 
     if getgenv().autofarm and getgenv().area then 
-        for i,v in pairs(game.Workspace.Blocks:GetChildren()) do
-            if not getgenv().autofarm then break end 
-            if v.Name:sub(1,1) == getgenv().area then 
-                repeat 
-                    task.wait()
-                    game.Players.LocalPlayer.Character.PrimaryPart.CFrame = v.CFrame
-                    v.CanCollide = false 
-                until not v or not v.Parent or v.Parent.Name ~= "Blocks" or not getgenv().autofarm 
-                task.spawn(function()
-                    pickup()
-                    sell()
-                end)
-            end
-        end
+        
+        if not getgenv().legit then 
+            teleportFarm()
+        else 
+            walkFarm()
+        end 
     end
     if getgenv().autopickup and not getgenv().autofarm then 
         task.spawn(function()
