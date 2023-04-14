@@ -46,7 +46,13 @@ local themes = {
 
 local menu = lib.new("Slime Mine", 5013109572) 
 
+local page = menu:addPage("Local Player", 5012544693)
+local tab = page:addSection("Local Player")
+tab:addSlider("Walkspeed", 16, 0, 300, function(value)
+    game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = value
+end)
 local page1 = menu:addPage("Main", 5012544693)
+
 local tab1 = page1:addSection("Autofarm")
 tab1:addDropdown("Select area",getAreas(),function(selected) 
     if tostring(tonumber(selected)) == selected then 
@@ -189,3 +195,19 @@ while task.wait() do
     end 
 end
 
+--[[
+
+for _,v in next, getgc() do 
+    if type(v) == 'function' and debug.getinfo(v).name == 'GetPlayerData' then 
+        local old = v 
+        old  = hookfunction(v, function(...)
+            local args = {...}
+            if args[2] == "Zone.current" then 
+                return 69 
+            else 
+                return old(...)
+            end
+        end)
+    end 
+end
+]]
