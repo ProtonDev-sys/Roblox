@@ -51,6 +51,28 @@ local tab = page:addSection("Local Player")
 tab:addSlider("Walkspeed", 16, 0, 300, function(value)
     game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = value
 end)
+tab:addButton("Unlock teleports", function()
+    local plr = game.Players.LocalPlayer 
+    for _,v in next, plr.PlayerGui.UI.Zones.ScrollingFrame:GetChildren() do 
+        if v.ClassName == 'Frame' and v.Name ~= "Lobby" then 
+            v.TextButton.Locked.Visible = false 
+            v.TextButton.MouseButton1Click:Connect(function()
+                game:GetService("ReplicatedStorage").Modules._Index["sleitnick_knit@1.4.7"].knit.Services.PlayerService.RF.requestAction:InvokeServer("teleportToZone", tonumber(v.Name:split("Zone")[2]))
+            end) 
+        end
+    end
+
+    plr.PlayerGui.UI.ChildAdded:Connect(function(v)
+        local old = v.Visible
+        v.Visible = false 
+        wait()
+        if string.match(v.Description.Text, "teleport") then 
+            v:Destroy()
+        else 
+            v.Visible = old
+        end 
+    end)
+end)
 local page1 = menu:addPage("Main", 5012544693)
 
 local tab1 = page1:addSection("Autofarm")
@@ -122,6 +144,12 @@ function pickup()
 end
 
 function sell()
+    if not workspace:WaitForChild("Sell"):FindFirstChild("Zone1") then 
+        local cf = game.Players.LocalPlayer.Character.PrimaryPart.CFrame
+        game:GetService("ReplicatedStorage").Modules._Index["sleitnick_knit@1.4.7"].knit.Services.PlayerService.RF.requestAction:InvokeServer("teleportToZone", 1)
+        wait(2)
+        game.Players.LocalPlayer.Character.PrimaryPart.CFrame = cf
+    end
     local cf = game:GetService("Workspace").Sell:WaitForChild("Zone1").CFrame
     game:GetService("Workspace").Sell.Zone1.CFrame = game.Players.LocalPlayer.Character.PrimaryPart.CFrame
     wait(1)
@@ -139,11 +167,12 @@ function teleportFarm()
                 task.wait()
                 game.Players.LocalPlayer.Character.PrimaryPart.CFrame = v.CFrame
                 v.CanCollide = false 
-                warn("ok")
             until not v or not v.Parent or v.Parent.Name ~= "Blocks" or not getgenv().autofarm 
             task.spawn(function()
                 pickup()
-                sell()
+                if getgenv().autosell then 
+                    sell()
+                end
             end)
         end
     end
@@ -168,15 +197,19 @@ function walkFarm()
     local block = closestBlock()
     if block then 
         game.Players.LocalPlayer.Character.Humanoid:MoveTo(block.Position)
-        game.Players.LocalPlayer.Character.Humanoid.MoveToFinished:Wait()
     end
     pickup()
-    sell()
+    if getgenv().autosell then 
+        sell()
+    end
 end
-
+local old = getgenv().area
 while task.wait() do 
     if getgenv().autofarm and getgenv().area then 
-        
+        if getgenv().area ~= old then 
+            game:GetService("ReplicatedStorage").Modules._Index["sleitnick_knit@1.4.7"].knit.Services.PlayerService.RF.requestAction:InvokeServer("teleportToZone", tonumber(getgenv().area))
+        end 
+        old = getgenv().area
         if not getgenv().legit then 
             teleportFarm()
         else 
