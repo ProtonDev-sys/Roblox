@@ -1,4 +1,12 @@
+local cachedVersion = "2023-04-17T11:38:14.1780695Z"
+local MarketplaceService = game:GetService("MarketplaceService")
+local placeVersion = MarketplaceService:GetProductInfo(game.PlaceId).Updated
+
+
+
 local lib = loadstring(game:HttpGet("https://raw.githubusercontent.com/GreenDeno/Venyx-UI-Library/main/source.lua"))()
+
+
 
 local function getAreas() 
     local areas = {}
@@ -44,7 +52,23 @@ local themes = {
     TextColor = Color3.fromRGB(255, 255, 255)
 }
 
-local menu = lib.new("Slime Mine", 5013109572) 
+local menu = lib.new("Slime Mine", 5013109572)
+
+if placeVersion ~= cachedVersion then 
+    menu:toggle()
+    getgenv()._continue = nil
+    menu:Notify("UPDATE DETECTED", "The game has updated and the script is not guranteed to be safe, are you sure you want to continue?", function(val)
+        getgenv()._continue = val 
+    end) 
+    repeat 
+        task.wait()
+    until getgenv()._continue ~= nil 
+    warn(getgenv()._continue)
+    if getgenv()._continue == false then 
+        exit()
+    end 
+    menu:toggle()
+end
 
 local page = menu:addPage("Local Player", 5012544693)
 local tab = page:addSection("Local Player")
@@ -243,4 +267,5 @@ for _,v in next, getgc() do
         end)
     end 
 end
+
 ]]
