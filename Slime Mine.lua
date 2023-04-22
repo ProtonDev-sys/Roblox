@@ -227,9 +227,11 @@ function sell()
         wait(2)
         game.Players.LocalPlayer.Character.PrimaryPart.CFrame = cf
     end
-    repeat task.wait()
-        game.Players.LocalPlayer.Character.PrimaryPart.CFrame = game:GetService("Workspace").Sell:WaitForChild("Zone1").CFrame
+    repeat
+        game.Players.LocalPlayer.Character.PrimaryPart.CFrame = game:GetService("Workspace").Sell:WaitForChild("Zone"..getgenv().area).CFrame
+        wait()
         game.Players.LocalPlayer.Character.Humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+        wait(.25)
     until not shouldSell()
     if not getgenv().legit then
         if getgenv().arr then 
