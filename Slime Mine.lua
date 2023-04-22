@@ -210,6 +210,8 @@ function getBackpackAmount()
     return size 
 end 
 
+--[[
+
 local oldNamecall -- bypass the new anti teleport if it's added
 oldNamecall = hookmetamethod(game, "__namecall", newcclosure(function(self, ...)
     if getcallingscript() == game.Players.LocalPlayer.PlayerScripts.Client and string.lower(getnamecallmethod()) == "isa" then 
@@ -218,6 +220,8 @@ oldNamecall = hookmetamethod(game, "__namecall", newcclosure(function(self, ...)
 
     return oldNamecall(self, ...)    
 end))
+
+]]
 
 function sell()
     if not shouldSell() or not getgenv().area then return end
