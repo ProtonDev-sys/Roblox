@@ -210,24 +210,14 @@ function getBackpackAmount()
     return size 
 end 
 
-for _,v in next, getgc(true) do 
-    if type(v) == 'table' and #v > 0 and type(v[1]) == "vector" and math.floor(v[1].X) == 574  then 
-        getgenv().arr = v
-    end 
-end
+local oldNamecall -- bypass the new anti teleport if it's added
+oldNamecall = hookmetamethod(game, "__namecall", newcclosure(function(self, ...)
+    if getcallingscript() == game.Players.LocalPlayer.PlayerScripts.Client and string.lower(getnamecallmethod()) == "isa" then 
+        return false
+    end
 
-function teleport(pos)
-    local rem = getgenv().arr[1]
-    setreadonly(getgenv().arr, false)
-    getgenv().arr[1] = pos
-    setreadonly(getgenv().arr, true)
-    game.Players.LocalPlayer.Character.PrimaryPart.CFrame = CFrame.new(pos)
-    wait(.5)
-    setreadonly(getgenv().arr, false)
-    getgenv().arr[1] = rem 
-    setreadonly(getgenv().arr, true)
-    warn("Teleport bypassed")
-end 
+    return oldNamecall(self, ...)    
+end))
 
 function sell()
     if not shouldSell() or not getgenv().area then return end
@@ -243,7 +233,7 @@ function sell()
     until not shouldSell()
     if not getgenv().legit then
         if getgenv().arr then 
-            teleport(cf.Position)
+            game.Players.LocalPlayer.Character.PrimaryPart.CFrame = cf
         else 
             game.Players.LocalPlayer.Character.PrimaryPart.CFrame = cf
         end
