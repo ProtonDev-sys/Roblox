@@ -293,11 +293,8 @@ function walkFarm()
     if block then 
         pickup()
         if getgenv().autosell then 
-            warn("trying to sell")
             sell()
-            warn("done")
         end
-        warn("walk")
         game.Players.LocalPlayer.Character.Humanoid:MoveTo(block.Position)
     end
     pickup()
@@ -309,15 +306,14 @@ end
 local old = 0
 while task.wait() do 
     if getgenv().autofarm and getgenv().area then 
-        if getgenv().area ~= old then 
+        local b = closestBlock()
+        if getgenv().area ~= old or not b or (game.Players.LocalPlayer.Character.PrimaryPart.Position - b.Position).magnitude > 150 then 
             game:GetService("ReplicatedStorage").Modules._Index["sleitnick_knit@1.4.7"].knit.Services.PlayerService.RF.requestAction:InvokeServer("teleportToZone", tonumber(getgenv().area))
         end 
         old = getgenv().area
         if not getgenv().legit then 
-            warn("ok")
             teleportFarm()
         else 
-            warn("ok2")
             walkFarm()
         end 
     end
