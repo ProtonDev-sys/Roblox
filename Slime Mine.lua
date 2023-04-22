@@ -210,17 +210,45 @@ function getBackpackAmount()
     return size 
 end 
 
+for _,v in next, getgc(true) do 
+    if type(v) == 'table' and #v > 0 and type(v[1]) == "vector" and math.floor(v[1].X) == 574  then 
+        getgenv().arr = v
+    end 
+end
+
+function teleport(pos)
+    local rem = getgenv().arr[1]
+    setreadonly(getgenv().arr, false)
+    getgenv().arr[1] = pos
+    setreadonly(getgenv().arr, true)
+    game.Players.LocalPlayer.Character.PrimaryPart.CFrame = CFrame.new(pos)
+    wait(.5)
+    setreadonly(getgenv().arr, false)
+    getgenv().arr[1] = rem 
+    setreadonly(getgenv().arr, true)
+    warn("Teleport bypassed")
+end 
+
 function sell()
-    if not shouldSell() then return end
+    if not shouldSell() or not getgenv().area then return end
     local cf = game.Players.LocalPlayer.Character.PrimaryPart.CFrame
-    if not workspace:WaitForChild("Sell"):FindFirstChild("Zone1") then 
-        game:GetService("ReplicatedStorage").Modules._Index["sleitnick_knit@1.4.7"].knit.Services.PlayerService.RF.requestAction:InvokeServer("teleportToZone", 1)
+    if not workspace:WaitForChild("Sell"):FindFirstChild("Zone"..getgenv().area) then 
+        game:GetService("ReplicatedStorage").Modules._Index["sleitnick_knit@1.4.7"].knit.Services.PlayerService.RF.requestAction:InvokeServer("teleportToZone", tonumber(getgenv().area))
         wait(2)
         game.Players.LocalPlayer.Character.PrimaryPart.CFrame = cf
     end
-    game.Players.LocalPlayer.Character.PrimaryPart.CFrame = game:GetService("Workspace").Sell:WaitForChild("Zone1").CFrame
-    wait(1)
-    game.Players.LocalPlayer.Character.PrimaryPart.CFrame = cf
+    repeat task.wait()
+        game.Players.LocalPlayer.Character.PrimaryPart.CFrame = game:GetService("Workspace").Sell:WaitForChild("Zone1").CFrame
+        game.Players.LocalPlayer.Character.Humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+    until not shouldSell()
+    if not getgenv().legit then
+        if getgenv().arr then 
+            teleport(cf.Position)
+        else 
+            game.Players.LocalPlayer.Character.PrimaryPart.CFrame = cf
+        end
+    end
+    game.Players.LocalPlayer.Character.PrimaryPart.Velocity = Vector3.new(0,0,0)
 end
 
 wait(2)
@@ -269,8 +297,11 @@ function walkFarm()
     if block then 
         pickup()
         if getgenv().autosell then 
+            warn("trying to sell")
             sell()
+            warn("done")
         end
+        warn("walk")
         game.Players.LocalPlayer.Character.Humanoid:MoveTo(block.Position)
     end
     pickup()
@@ -279,7 +310,7 @@ function walkFarm()
     end
 end
 
-local old = getgenv().area
+local old = 0
 while task.wait() do 
     if getgenv().autofarm and getgenv().area then 
         if getgenv().area ~= old then 
@@ -287,8 +318,10 @@ while task.wait() do
         end 
         old = getgenv().area
         if not getgenv().legit then 
+            warn("ok")
             teleportFarm()
         else 
+            warn("ok2")
             walkFarm()
         end 
     end
