@@ -210,20 +210,36 @@ end)
 localTab:addButton("Open Slime Awakening Menu", function()
     local oldCFrame = player.Character.PrimaryPart.CFrame 
     if not workspace:FindFirstChild("Map"):FindFirstChild("Zone1"):FindFirstChild("PetMerge"):FindFirstChild("PetMerge"):FindFirstChild("Circle Activated") then
-        teleportToArea(1)
+        repeat task.wait()
+            teleportToArea(1)
+        until workspace:FindFirstChild("Map"):FindFirstChild("Zone1"):FindFirstChild("PetMerge"):FindFirstChild("PetMerge"):FindFirstChild("Circle Activated")
     end
-    teleport(workspace.Map['Zone1'].PetMerge:GetChildren()[1]['Circle Activated'].CFrame)
-    wait(.1)
+    teleport(workspace.Map.Zone1.PetMerge:GetChildren()[1]['Circle Activated'].CFrame)
+    wait()
     teleport(oldCFrame)
 end)
 
 localTab:addButton("Open Ascension Menu", function()
     local oldCFrame = player.Character.PrimaryPart.CFrame 
     if #workspace.Ascension:GetChildren() < 1 then 
-        teleportToArea(2)
+        repeat task.wait()
+            teleportToArea(2)
+        until #workspace.Ascension:GetChildren() >= 1
     end
     teleport(workspace.Ascension:GetChildren()[1]['Circle Activated'].CFrame)
-    wait(.1)
+    wait()
+    teleport(oldCFrame)
+end)
+
+localTab:addButton("Open Player Upgrades Menu", function()
+    local oldCFrame = player.Character.PrimaryPart.CFrame 
+    if not workspace:FindFirstChild("Map"):FindFirstChild("Zone4"):FindFirstChild("Upgrade"):FindFirstChild("Main") then
+        repeat task.wait()
+            teleportToArea(4)
+        until workspace:FindFirstChild("Map"):FindFirstChild("Zone4"):FindFirstChild("Upgrade"):FindFirstChild("Main")
+    end
+    teleport(workspace.Map.Zone4.Upgrade.Main.CFrame)
+    wait()
     teleport(oldCFrame)
 end)
 
