@@ -1,47 +1,8 @@
-local cachedVersion = "2023-04-21T19:06:28.443495Z"
+local scriptVersion = "2023-04-23T20:51:13.3458556Z"
 local MarketplaceService = game:GetService("MarketplaceService")
 local placeVersion = MarketplaceService:GetProductInfo(game.PlaceId).Updated
 
-
-
 local lib = loadstring(game:HttpGet("https://raw.githubusercontent.com/GreenDeno/Venyx-UI-Library/main/source.lua"))()
-
-
-
-local function getAreas() 
-    local areas = {}
-    for _,v in next, game:GetService("Workspace").Areas:GetChildren() do 
-        if tostring(tonumber(v.Name)) == v.Name then 
-            table.insert(areas, v.Name)
-        end
-    end 
-    table.sort(areas, function(a,b)
-        return tonumber(a) < tonumber(b)
-    end)
-    return areas
-end
-
-function getEggs()
-    local eggs = {}
-    for _,v in next, game:GetService("ReplicatedStorage").Eggs:GetChildren() do 
-        local txt = v.Name:sub(v.Name:len(),v.Name:len())
-        if tostring(tonumber(txt)) == txt then 
-            table.insert(eggs, v.Name)
-        end 
-    end 
-    return eggs 
-end 
-
-function getpets() 
-    for _,v in next, getgc(true) do 
-        if type(v) == 'table' and rawget(v,'petHandlers') then 
-            if v['player'] == game.Players.LocalPlayer then 
-                return v
-            end
-        end 
-    end    
-end
-
 
 local themes = {
     Background = Color3.fromRGB(24, 24, 24),
@@ -54,7 +15,7 @@ local themes = {
 
 local menu = lib.new("Slime Mine", 5013109572)
 
-if placeVersion ~= cachedVersion then 
+if placeVersion ~= scriptVersion then 
     menu:toggle()
     getgenv()._continue = nil
     menu:Notify("UPDATE DETECTED", "The game has updated and the script is not guranteed to be safe, are you sure you want to continue?", function(val)
@@ -70,139 +31,68 @@ if placeVersion ~= cachedVersion then
     menu:toggle()
 end
 
-local page = menu:addPage("Local Player", 5012544693)
-local tab = page:addSection("Local Player")
-tab:addSlider("Walkspeed", 16, 0, 300, function(value)
-    game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = value
-end)
-tab:addButton("Unlock teleports", function()
-    local plr = game.Players.LocalPlayer 
-    for _,v in next, plr.PlayerGui.UI.Zones.ScrollingFrame:GetChildren() do 
-        if v.ClassName == 'Frame' and v.Name ~= "Lobby" then 
-            v.TextButton.Locked.Visible = false 
-            v.TextButton.MouseButton1Click:Connect(function()
-                game:GetService("ReplicatedStorage").Modules._Index["sleitnick_knit@1.4.7"].knit.Services.PlayerService.RF.requestAction:InvokeServer("teleportToZone", tonumber(v.Name:split("Zone")[2]))
-            end) 
-        end
-    end
-
-    plr.PlayerGui.UI.ChildAdded:Connect(function(v)
-        local old = v.Visible
-        v.Visible = false 
-        wait()
-        if string.match(v.Description.Text, "teleport") then 
-            v:Destroy()
-        else 
-            v.Visible = old
-        end 
-    end)
-end)
-local page1 = menu:addPage("Main", 5012544693)
-
-local tab1 = page1:addSection("Autofarm")
-tab1:addDropdown("Select area",getAreas(),function(selected) 
-    if tostring(tonumber(selected)) == selected then 
-        getgenv().area = selected
-    end
-end)
-
-tab1:addToggle("Autopickup",false,function(value)
-    getgenv().autopickup = value
-end)
-
-tab1:addToggle("Legit Mode",false,function(value) 
-    getgenv().legit = value
- end)
-
-tab1:addToggle("Autofarm",false,function(value) 
-   getgenv().autofarm = value
-end)
-
-tab1:addToggle("Autosell",false,function(value)
-    getgenv().autosell = value
-    if value then 
-        task.spawn(function()
-            while getgenv().autosell do 
-                wait(.1)
-                if shouldSell() then 
-                    sell() 
-                end 
-            end 
-        end) 
-    end
-end)
-
-function getNextZone() 
-    local smal = math.huge 
-    local areas = {}
-    for _,v in next, game:GetService("Workspace").Doors:GetChildren() do 
-        table.insert(areas, tonumber(v.Name))
-    end 
-    table.sort(areas, function(a,b)
-        return a<b 
-    end) 
-
-    return areas[1]
-end
-
-tab1:addToggle("Auto unlock area",false,function(value)
-    getgenv().autoUnlock = value 
-    task.spawn(function()
-        while getgenv().autoUnlock and task.wait() do 
-            game:GetService("ReplicatedStorage").Modules._Index["sleitnick_knit@1.4.7"].knit.Services.PlayerService.RF.requestAction:InvokeServer("unlockZone", getNextZone())
-        end 
-    end)
-end)
-
-local tab2 = page1:addSection("Auto hatch")
-tab2:addDropdown("Select egg",getEggs(),function(selected) 
-    getgenv().egg = selected
-end)
-getgenv().hatchamount = 1
-tab2:addToggle("Triple Hatch",false,function(value) 
-   getgenv().hatchamount = value and 3 or 1
-end)
-
-tab2:addToggle("Auto hatch",false,function(value) 
-    getgenv().autohatch = value 
-    task.spawn(function()
-        while getgenv().autohatch do
-            game:GetService("ReplicatedStorage").Modules._Index["sleitnick_knit@1.4.7"].knit.Services.PlayerService.RF.requestAction:InvokeServer("hatch", getgenv().egg, getgenv().hatchamount)
-        end 
-    end)
-end)
-local theme = menu:addPage("Settings", 5012544693)
-local colors = theme:addSection("Colors")
-
-for theme, color in pairs(themes) do 
-    colors:addColorPicker(theme, color, function(color3)
-        menu:setTheme(theme, color3)
-    end)
-end
-
-local misc = theme:addSection("misc")
-misc:addKeybind("Toggle Keybind", Enum.KeyCode.RightControl, function()
-    print("Activated Keybind")
-    menu:toggle()
-end, function()
-    print("Changed Keybind")
-end)
-
 for _,v in next, getconnections(game.Players.LocalPlayer.Idled) do 
     v:Disable()
 end
 
+local knit = require(game.ReplicatedStorage:WaitForChild("Modules"):WaitForChild("knit"));
+local invUtil = require(game:GetService("ReplicatedStorage").Util.inventoryUtil)
+local infoHandler = knit.GetController("InformationController")
+local eggInfo = infoHandler:getInformation("eggInfo")
+local zoneInfo = infoHandler:getInformation("zonesInfo")
+local dataController = knit.GetController("DataController");
+
+local player = game:GetService("Players").LocalPlayer
+local services = game:GetService("ReplicatedStorage").Modules._Index["sleitnick_knit@1.4.7"].knit.Services
+
 function pickup() 
     for i,v in pairs(game.Workspace.PickupParts:GetChildren()) do
         if v.Name:sub(1,game.Players.LocalPlayer.Name:len()) == game.Players.LocalPlayer.Name  and v:FindFirstChild("Part") then
-            game:GetService("ReplicatedStorage").Modules._Index["sleitnick_knit@1.4.7"].knit.Services.BlocksService.RF.tryPickUpBlock:InvokeServer(v.Name:split("#")[4])
+            services.BlocksService.RF.tryPickUpBlock:InvokeServer(v.Name:split("#")[4])
         end
     end
 end
 
-local knit = require(game.ReplicatedStorage:WaitForChild("Modules"):WaitForChild("knit"));
-local invUtil = require(game:GetService("ReplicatedStorage").Util.inventoryUtil)
-dataController = knit.GetController("DataController");
+function getAreas() 
+    local areas = {}
+    for _,v in next, zoneInfo['names'] do 
+        if _ <= zoneInfo['maxUnlockableZone'] then 
+            table.insert(areas, v)
+        end 
+    end
+    return areas
+end
+
+function getEggs()
+    local eggs = {}
+    for _,v in next, eggInfo['eggNames'] do 
+        if _ ~= "StarterOrb" and v ~= "Beta Portal" then
+            table.insert(eggs, v)
+        end 
+    end 
+
+    table.sort(eggs, function(egg1,egg2)
+        local number1,number2 
+        for i,v in next, eggInfo['eggNames'] do
+            if v == a then 
+                number1 = tonumber(string.split(i,"Egg")[2])
+            elseif v == b then 
+                number2 = tonumber(string.split(i,"Egg")[2])
+            end 
+        end 
+        return number1 < number2
+    end)
+
+    return eggs 
+end 
+
+function teleportToArea(area)
+    game.Players.LocalPlayer.Character.PrimaryPart.CFrame = CFrame.new(Vector3.new(570.1199951171875, 213.043701171875, 1469.739990234375) - Vector3.new(0,0,380) * area)
+end
+
+function teleport(cframe)
+    player.Character.PrimaryPart.CFrame = cframe
+end
 
 function shouldSell()
     if (invUtil:getBackpackCapacity(game.Players.LocalPlayer) - getBackpackAmount() < 5) then 
@@ -220,71 +110,47 @@ function getBackpackAmount()
     return size 
 end 
 
---[[
-
-local oldNamecall -- bypass the new anti teleport if it's added
-oldNamecall = hookmetamethod(game, "__namecall", newcclosure(function(self, ...)
-    if getcallingscript() == game.Players.LocalPlayer.PlayerScripts.Client and string.lower(getnamecallmethod()) == "isa" then 
-        return false
-    end
-
-    return oldNamecall(self, ...)    
-end))
-
-]]
-
 function sell()
     if not shouldSell() or not getgenv().area then return end
-    local cf = game.Players.LocalPlayer.Character.PrimaryPart.CFrame
+    local oldCFrame = game.Players.LocalPlayer.Character.PrimaryPart.CFrame
     if not workspace:WaitForChild("Sell"):FindFirstChild("Zone"..getgenv().area) then 
-        game:GetService("ReplicatedStorage").Modules._Index["sleitnick_knit@1.4.7"].knit.Services.PlayerService.RF.requestAction:InvokeServer("teleportToZone", tonumber(getgenv().area))
+        teleportToArea(tonumber(getgenv().area))
         wait(2)
-        game.Players.LocalPlayer.Character.PrimaryPart.CFrame = cf
+        teleport(oldCFrame)
     end
     repeat
-        game.Players.LocalPlayer.Character.PrimaryPart.CFrame = game:GetService("Workspace").Sell:WaitForChild("Zone"..getgenv().area).CFrame
+        teleport(workspace.Sell:WaitForChild("Zone"..getgenv().area).CFrame)
         wait()
-        game.Players.LocalPlayer.Character.Humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+        player.Character.Humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
         wait(.25)
     until not shouldSell()
     if not getgenv().legit then
-        if getgenv().arr then 
-            game.Players.LocalPlayer.Character.PrimaryPart.CFrame = cf
-        else 
-            game.Players.LocalPlayer.Character.PrimaryPart.CFrame = cf
-        end
+        teleport(oldCFrame)
     end
     game.Players.LocalPlayer.Character.PrimaryPart.Velocity = Vector3.new(0,0,0)
 end
 
-wait(2)
---local pets = getpets()
-
 function teleportFarm()
-    for i,v in pairs(game.Workspace.Blocks:GetChildren()) do
+    for _,block in next, game.Workspace.Blocks:GetChildren() do
         if not getgenv().autofarm then break end 
         if v.Name:sub(1,1) == getgenv().area then 
             repeat 
                 task.wait()
-                game.Players.LocalPlayer.Character.PrimaryPart.CFrame = v.CFrame
-                v.CanCollide = false 
-                pickup()
-            until not v or not v.Parent or v.Parent.Name ~= "Blocks" or not getgenv().autofarm 
-            task.spawn(function()
-                pickup()
-            end)
+                teleport(block.CFrame)
+                block.CanCollide = false 
+            until not block or not block.Parent or block.Parent.Name ~= "Blocks" or not getgenv().autofarm 
         end
     end
 end
 
 function closestBlock()
-    local closest, block = math.huge, nil
+    local closestDistance, block = math.huge, nil
     for _,v in next, workspace.Blocks:GetChildren() do 
         if not getgenv().autofarm then break end 
         if v.Name:sub(1,1) == getgenv().area then 
-            local dist = (game.Players.LocalPlayer.Character.PrimaryPart.Position-v.Position).magnitude 
-            if dist < closest and math.abs(game.Players.LocalPlayer.Character.PrimaryPart.Position.Y-v.Position.Y) < 14 then 
-                closest = dist 
+            local _dist = (game.Players.LocalPlayer.Character.PrimaryPart.Position-v.Position).magnitude 
+            if dist < closestDistance and math.abs(game.Players.LocalPlayer.Character.PrimaryPart.Position.Y-v.Position.Y) < 14 then 
+                closestDistance = _dist 
                 block = v 
             end 
         end 
@@ -301,41 +167,166 @@ function walkFarm()
     pickup()
 end
 
-local old = 0
-while wait(.1) do 
-    if getgenv().autofarm and getgenv().area then 
-        local b = closestBlock()
-        if getgenv().area ~= old or not b or (game.Players.LocalPlayer.Character.PrimaryPart.Position - b.Position).magnitude > 150 then 
-            game:GetService("ReplicatedStorage").Modules._Index["sleitnick_knit@1.4.7"].knit.Services.PlayerService.RF.requestAction:InvokeServer("teleportToZone", tonumber(getgenv().area))
-        end 
-        old = getgenv().area
-        if not getgenv().legit then 
-            teleportFarm()
-        else 
-            walkFarm()
-        end 
-    end
-    if getgenv().autopickup and not getgenv().autofarm then 
-        task.spawn(function()
-            pickup()
-        end)
-    end
-end
-
---[[
-
-for _,v in next, getgc() do 
-    if type(v) == 'function' and debug.getinfo(v).name == 'GetPlayerData' then 
-        local old = v 
-        old  = hookfunction(v, function(...)
-            local args = {...}
-            if args[2] == "Zone.current" then 
-                return 69 
-            else 
-                return old(...)
-            end
-        end)
+function getNextZone() 
+    local areas = {}
+    for _,v in next, game:GetService("Workspace").Doors:GetChildren() do 
+        table.insert(areas, tonumber(v.Name))
     end 
+    table.sort(areas, function(a,b)
+        return a < b 
+    end) 
+
+    return areas[1]
 end
 
-]]
+local localPage = menu:addPage("Local Player", 5012544693)
+local localTab = localPage:addSection("Local Player")
+
+localTab:addSlider("Walkspeed", 16, 0, 300, function(value)
+    player.Character.Humanoid.WalkSpeed = value
+end)
+
+localTab:addButton("Unlock teleports", function()
+    for _,v in next, player.PlayerGui.UI.Zones.ScrollingFrame:GetChildren() do 
+        if v.ClassName == 'Frame' and v.Name ~= "Lobby" then 
+            v.TextButton.Locked.Visible = false 
+            v.TextButton.MouseButton1Click:Connect(function()
+                teleportToArea(tonumber(v.Name:split("Zone")[2]))
+            end) 
+        end
+    end
+
+    player.PlayerGui.UI.ChildAdded:Connect(function(v)
+        local old = v.Visible
+        v.Visible = false 
+        wait()
+        if string.match(v.Description.Text, "teleport") then 
+            v:Destroy()
+        else 
+            v.Visible = old
+        end 
+    end)
+end)
+
+local mainPage = menu:addPage("Main", 5012544693)
+local autofarmTab = mainPage:addSection("Autofarm")
+
+autofarmTab:addDropdown("Select area",getAreas(),function(selected) 
+    if tostring(tonumber(selected)) == selected then 
+        getgenv().area = selected
+    end
+end)
+
+autofarmTab:addToggle("Autopickup",false,function(value)
+    getgenv().autopickup = value
+    if value then 
+        task.spawn(function()
+            while getgenv().autopickup and wait(.25) do 
+                pickup()
+            end 
+        end) 
+    end
+end)
+
+autofarmTab:addToggle("Legit Mode",false,function(value) 
+    getgenv().legit = value
+ end)
+
+autofarmTab:addToggle("Autofarm",false,function(value) 
+   getgenv().autofarm = value
+   if value then 
+        while getgenv().autofarm do 
+            if getgenv().area then 
+                local _closestBlock = closestBlock()
+                if not _closestBlock or (game.Players.LocalPlayer.Character.PrimaryPart.Position - _closestBlock.Position).magnitude > 150 then 
+                    teleportToArea(tonumber(getgenv().area))
+                end 
+                if not getgenv().legit then 
+                    teleportFarm()
+                else 
+                    walkFarm()
+                end 
+            end 
+            wait(.2)
+        end 
+    end
+end)
+
+autofarmTab:addToggle("Autosell",false,function(value)
+    getgenv().autosell = value
+    if value then 
+        task.spawn(function()
+            while getgenv().autosell do 
+                wait(.1)
+                if shouldSell() then 
+                    sell() 
+                end 
+            end 
+        end) 
+    end
+end)
+
+autofarmTab:addToggle("Auto unlock next area",false,function(value)
+    getgenv().autoUnlock = value 
+    task.spawn(function()
+        while getgenv().autoUnlock and task.wait() do 
+            services.PlayerService.RF.requestAction:InvokeServer("unlockZone", getNextZone())
+        end 
+    end)
+end)
+
+local hatchTab = mainPage:addSection("Auto hatch")
+
+hatchTab:addDropdown("Select egg",getEggs(),function(selected) 
+    for i,v in next, eggInfo["eggNames"] do 
+        if v == selected then 
+            getgenv().egg = i 
+        end 
+    end
+end)
+
+hatchTab:addToggle("Triple Hatch",false,function(value) 
+   getgenv().hatchamount = value and 3 or 1
+end)
+
+hatchTab:addToggle("Auto hatch",false,function(value) 
+    getgenv().autohatch = value 
+    task.spawn(function()
+        while getgenv().autohatch do
+            local oldCFrame = game.Players.LocalPlayer.Character.PrimaryPart.CFrame 
+            if not game:GetService("Workspace").EggTriggers:FindFirstChild(getgenv().egg) then 
+                for i = 0 , 7 , 1 do 
+                    teleportToArea(i)
+                    wait(1)
+                end 
+            end
+            teleport(Workspace).EggTriggers:WaitForChild(getgenv().egg).CFrame)
+            wait(.05)
+            services.PlayerService.RF.requestAction:InvokeServer("hatch", getgenv().egg, getgenv().hatchamount or 1)
+            wait(.05)
+            teleport(oldCFrame)
+            wait(2.22)
+        end 
+    end)
+end)
+
+local themePage = menu:addPage("Settings", 5012544693)
+local colors = theme:addSection("Colors")
+
+for theme, color in pairs(themes) do 
+    colors:addColorPicker(theme, color, function(color3)
+        menu:setTheme(theme, color3)
+    end)
+end
+
+local miscSection = themePage:addSection("misc")
+
+miscSection:addKeybind("Toggle Keybind", Enum.KeyCode.RightControl, function()
+    print("Activated Keybind")
+    menu:toggle()
+end, function()
+    print("Changed Keybind")
+end)
+
+
+
