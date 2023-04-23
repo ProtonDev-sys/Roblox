@@ -120,6 +120,16 @@ end)
 
 tab1:addToggle("Autosell",false,function(value)
     getgenv().autosell = value
+    if value then 
+        task.spawn(function()
+            while getgenv().autosell do 
+                wait(.1)
+                if shouldSell() then 
+                    sell() 
+                end 
+            end 
+        end) 
+    end
 end)
 
 function getNextZone() 
@@ -259,15 +269,9 @@ function teleportFarm()
                 game.Players.LocalPlayer.Character.PrimaryPart.CFrame = v.CFrame
                 v.CanCollide = false 
                 pickup()
-                if getgenv().autosell then 
-                    sell()
-                end
             until not v or not v.Parent or v.Parent.Name ~= "Blocks" or not getgenv().autofarm 
             task.spawn(function()
                 pickup()
-                if getgenv().autosell then 
-                    sell()
-                end
             end)
         end
     end
@@ -292,19 +296,13 @@ function walkFarm()
     local block = closestBlock()
     if block then 
         pickup()
-        if getgenv().autosell then 
-            sell()
-        end
         game.Players.LocalPlayer.Character.Humanoid:MoveTo(block.Position)
     end
     pickup()
-    if getgenv().autosell then 
-        sell()
-    end
 end
 
 local old = 0
-while task.wait() do 
+while wait(.1) do 
     if getgenv().autofarm and getgenv().area then 
         local b = closestBlock()
         if getgenv().area ~= old or not b or (game.Players.LocalPlayer.Character.PrimaryPart.Position - b.Position).magnitude > 150 then 
@@ -322,11 +320,6 @@ while task.wait() do
             pickup()
         end)
     end
-    if getgenv().autosell and not getgenv().autofarm then 
-        task.spawn(function()
-            sell()
-        end)
-    end 
 end
 
 --[[
