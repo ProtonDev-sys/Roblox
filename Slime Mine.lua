@@ -24,7 +24,6 @@ if placeVersion ~= scriptVersion then
     repeat 
         task.wait()
     until getgenv()._continue ~= nil 
-    warn(getgenv()._continue)
     if getgenv()._continue == false then 
         exit()
     end 
@@ -73,11 +72,11 @@ function getEggs()
 
     table.sort(eggs, function(egg1,egg2)
         local number1,number2 
-        for i,v in next, eggInfo['eggNames'] do
-            if v == a then 
-                number1 = tonumber(string.split(i,"Egg")[2])
-            elseif v == b then 
-                number2 = tonumber(string.split(i,"Egg")[2])
+        for eggIndex,eggName in next, eggInfo['eggNames'] do
+            if eggName == egg1 then 
+                number1 = tonumber(string.split(eggIndex ,"Egg")[2])
+            elseif eggName == egg2 then 
+                number2 = tonumber(string.split(eggIndex ,"Egg")[2])
             end 
         end 
         return number1 < number2
@@ -149,7 +148,7 @@ function closestBlock()
         if not getgenv().autofarm then break end 
         if v.Name:sub(1,1) == getgenv().area then 
             local _dist = (game.Players.LocalPlayer.Character.PrimaryPart.Position-v.Position).magnitude 
-            if dist < closestDistance and math.abs(game.Players.LocalPlayer.Character.PrimaryPart.Position.Y-v.Position.Y) < 14 then 
+            if _dist < closestDistance and math.abs(game.Players.LocalPlayer.Character.PrimaryPart.Position.Y-v.Position.Y) < 14 then 
                 closestDistance = _dist 
                 block = v 
             end 
@@ -212,9 +211,11 @@ local mainPage = menu:addPage("Main", 5012544693)
 local autofarmTab = mainPage:addSection("Autofarm")
 
 autofarmTab:addDropdown("Select area",getAreas(),function(selected) 
-    if tostring(tonumber(selected)) == selected then 
-        getgenv().area = selected
-    end
+    for _,v in next, zoneInfo['names'] do 
+        if v == selected then 
+            getgenv().area = _
+        end 
+    end    
 end)
 
 autofarmTab:addToggle("Autopickup",false,function(value)
@@ -238,7 +239,7 @@ autofarmTab:addToggle("Autofarm",false,function(value)
         while getgenv().autofarm do 
             if getgenv().area then 
                 local _closestBlock = closestBlock()
-                if not _closestBlock or (game.Players.LocalPlayer.Character.PrimaryPart.Position - _closestBlock.Position).magnitude > 150 then 
+                if not _closestBlock or (player.Character.PrimaryPart.Position - _closestBlock.Position).magnitude > 150 then 
                     teleportToArea(tonumber(getgenv().area))
                 end 
                 if not getgenv().legit then 
@@ -300,7 +301,7 @@ hatchTab:addToggle("Auto hatch",false,function(value)
                     wait(1)
                 end 
             end
-            teleport(Workspace).EggTriggers:WaitForChild(getgenv().egg).CFrame)
+            teleport(Workspace.EggTriggers:WaitForChild(getgenv().egg).CFrame)
             wait(.05)
             services.PlayerService.RF.requestAction:InvokeServer("hatch", getgenv().egg, getgenv().hatchamount or 1)
             wait(.05)
@@ -311,7 +312,7 @@ hatchTab:addToggle("Auto hatch",false,function(value)
 end)
 
 local themePage = menu:addPage("Settings", 5012544693)
-local colors = theme:addSection("Colors")
+local colors = themePage:addSection("Colors")
 
 for theme, color in pairs(themes) do 
     colors:addColorPicker(theme, color, function(color3)
@@ -327,6 +328,5 @@ miscSection:addKeybind("Toggle Keybind", Enum.KeyCode.RightControl, function()
 end, function()
     print("Changed Keybind")
 end)
-
 
 
