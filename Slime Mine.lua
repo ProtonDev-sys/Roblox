@@ -207,6 +207,27 @@ localTab:addButton("Unlock teleports", function()
     end)
 end)
 
+localTab:addButton("Open Slime Awakening Menu", function()
+    local oldCFrame = player.Character.PrimaryPart.CFrame 
+    if not workspace:FindFirstChild("Map"):FindFirstChild("Zone1"):FindFirstChild("PetMerge"):FindFirstChild("PetMerge"):FindFirstChild("Circle Activated") then
+        teleportToArea(1)
+    end
+    teleport(workspace.Map['Zone1'].PetMerge:GetChildren()[1]['Circle Activated'].CFrame)
+    wait(.1)
+    teleport(oldCFrame)
+end)
+
+localTab:addButton("Open Ascension Menu", function()
+    local oldCFrame = player.Character.PrimaryPart.CFrame 
+    if #workspace.Ascension:GetChildren() < 1 then 
+        teleportToArea(2)
+    end
+    teleport(workspace.Ascension:GetChildren()[1]['Circle Activated'].CFrame)
+    wait(.1)
+    teleport(oldCFrame)
+end)
+
+
 local mainPage = menu:addPage("Main", 5012544693)
 local autofarmTab = mainPage:addSection("Autofarm")
 
