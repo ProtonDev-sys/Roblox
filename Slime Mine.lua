@@ -30,9 +30,7 @@ if placeVersion ~= scriptVersion then
     menu:toggle()
 end
 
-for _,v in next, getconnections(game.Players.LocalPlayer.Idled) do 
-    v:Disable()
-end
+
 
 local knit = require(game.ReplicatedStorage:WaitForChild("Modules"):WaitForChild("knit"));
 local invUtil = require(game:GetService("ReplicatedStorage").Util.inventoryUtil)
@@ -44,9 +42,13 @@ local dataController = knit.GetController("DataController");
 local player = game:GetService("Players").LocalPlayer
 local services = game:GetService("ReplicatedStorage").Modules._Index["sleitnick_knit@1.4.7"].knit.Services
 
+for _,v in next, getconnections(player.Idled) do 
+    v:Disable()
+end
+
 function pickup() 
     for i,v in pairs(game.Workspace.PickupParts:GetChildren()) do
-        if v.Name:sub(1,game.Players.LocalPlayer.Name:len()) == game.Players.LocalPlayer.Name  and v:FindFirstChild("Part") then
+        if v.Name:sub(1,player.Name:len()) == player.Name  and v:FindFirstChild("Part") then
             services.BlocksService.RF.tryPickUpBlock:InvokeServer(v.Name:split("#")[4])
         end
     end
@@ -86,7 +88,7 @@ function getEggs()
 end 
 
 function teleportToArea(area)
-    game.Players.LocalPlayer.Character.PrimaryPart.CFrame = CFrame.new(Vector3.new(570.1199951171875, 213.043701171875, 1469.739990234375) - Vector3.new(0,0,380) * area)
+    player.Character.PrimaryPart.CFrame = CFrame.new(Vector3.new(570.1199951171875, 213.043701171875, 1469.739990234375) - Vector3.new(0,0,380) * area)
 end
 
 function teleport(cframe)
@@ -94,7 +96,7 @@ function teleport(cframe)
 end
 
 function shouldSell()
-    if (invUtil:getBackpackCapacity(game.Players.LocalPlayer) - getBackpackAmount() < 5) then 
+    if (invUtil:getBackpackCapacity(player) - getBackpackAmount() < 5) then 
         return true 
     else 
         return false 
@@ -111,7 +113,7 @@ end
 
 function sell()
     if not shouldSell() or not getgenv().area then return end
-    local oldCFrame = game.Players.LocalPlayer.Character.PrimaryPart.CFrame
+    local oldCFrame = player.Character.PrimaryPart.CFrame
     if not workspace:WaitForChild("Sell"):FindFirstChild("Zone"..getgenv().area) then 
         teleportToArea(tonumber(getgenv().area))
         wait(2)
@@ -126,29 +128,27 @@ function sell()
     if not getgenv().legit then
         teleport(oldCFrame)
     end
-    game.Players.LocalPlayer.Character.PrimaryPart.Velocity = Vector3.new(0,0,0)
+    player.Character.PrimaryPart.Velocity = Vector3.new(0,0,0)
 end
 
 function teleportFarm()
-    for _,block in next, game.Workspace.Blocks:GetChildren() do
-        if not getgenv().autofarm then break end 
-        if v.Name:sub(1,1) == getgenv().area then 
-            repeat 
-                task.wait()
-                teleport(block.CFrame)
-                block.CanCollide = false 
-            until not block or not block.Parent or block.Parent.Name ~= "Blocks" or not getgenv().autofarm 
+    repeat 
+        task.wait()
+        local block = closestBlock()
+        if block then 
+            teleport(block.CFrame)
+            block.CanCollide = false 
         end
-    end
+    until not block or not block.Parent or block.Parent.Name ~= "Blocks" or not getgenv().autofarm 
 end
 
 function closestBlock()
     local closestDistance, block = math.huge, nil
     for _,v in next, workspace.Blocks:GetChildren() do 
         if not getgenv().autofarm then break end 
-        if v.Name:sub(1,1) == getgenv().area then 
-            local _dist = (game.Players.LocalPlayer.Character.PrimaryPart.Position-v.Position).magnitude 
-            if _dist < closestDistance and math.abs(game.Players.LocalPlayer.Character.PrimaryPart.Position.Y-v.Position.Y) < 14 then 
+        if v.Name:sub(1,1) == tostring(getgenv().area) then 
+            local _dist = (player.Character.PrimaryPart.Position-v.Position).magnitude 
+            if _dist < closestDistance and math.abs(player.Character.PrimaryPart.Position.Y-v.Position.Y) < 14 then 
                 closestDistance = _dist 
                 block = v 
             end 
@@ -161,7 +161,7 @@ function walkFarm()
     local block = closestBlock()
     if block then 
         pickup()
-        game.Players.LocalPlayer.Character.Humanoid:MoveTo(block.Position)
+        player.Character.Humanoid:MoveTo(block.Position)
     end
     pickup()
 end
@@ -294,7 +294,7 @@ hatchTab:addToggle("Auto hatch",false,function(value)
     getgenv().autohatch = value 
     task.spawn(function()
         while getgenv().autohatch do
-            local oldCFrame = game.Players.LocalPlayer.Character.PrimaryPart.CFrame 
+            local oldCFrame = player.Character.PrimaryPart.CFrame 
             if not game:GetService("Workspace").EggTriggers:FindFirstChild(getgenv().egg) then 
                 for i = 0 , 7 , 1 do 
                     teleportToArea(i)
