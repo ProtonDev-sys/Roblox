@@ -32,12 +32,12 @@ end
 
 
 
-local knit = require(game.ReplicatedStorage:WaitForChild("Modules"):WaitForChild("knit"));
+local knit = require(game.ReplicatedStorage:WaitForChild("Modules"):WaitForChild("knit"))
 local invUtil = require(game:GetService("ReplicatedStorage").Util.inventoryUtil)
 local infoHandler = knit.GetController("InformationController")
 local eggInfo = infoHandler:getInformation("eggInfo")
 local zoneInfo = infoHandler:getInformation("zonesInfo")
-local dataController = knit.GetController("DataController");
+local dataController = knit.GetController("DataController")
 
 local player = game:GetService("Players").LocalPlayer
 local services = game:GetService("ReplicatedStorage").Modules._Index["sleitnick_knit@1.4.7"].knit.Services
@@ -119,10 +119,10 @@ function sell()
         wait(2)
         teleport(oldCFrame)
     end
+    teleport(workspace.Sell:WaitForChild("Zone"..getgenv().area).CFrame)
+    wait()
+    player.Character.Humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
     repeat
-        teleport(workspace.Sell:WaitForChild("Zone"..getgenv().area).CFrame)
-        wait()
-        player.Character.Humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
         wait(.25)
     until not shouldSell()
     if not getgenv().legit then
@@ -148,7 +148,7 @@ function closestBlock()
         if not getgenv().autofarm then break end 
         if v.Name:sub(1,1) == tostring(getgenv().area) then 
             local _dist = (player.Character.PrimaryPart.Position-v.Position).magnitude 
-            if _dist < closestDistance and math.abs(player.Character.PrimaryPart.Position.Y-v.Position.Y) < 14 then 
+            if _dist < closestDistance and math.abs(player.Character.PrimaryPart.Position.Y-v.Position.Y) < 16 then 
                 closestDistance = _dist 
                 block = v 
             end 
