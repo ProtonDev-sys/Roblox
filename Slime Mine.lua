@@ -1,4 +1,4 @@
-local scriptVersion = "2023-04-23T20:51:13.3458556Z"
+local scriptVersion = "2023-04-25T04:57:53.2998803Z"
 local MarketplaceService = game:GetService("MarketplaceService")
 local placeVersion = MarketplaceService:GetProductInfo(game.PlaceId).Updated
 
@@ -276,7 +276,7 @@ autofarmTab:addToggle("Autofarm",false,function(value)
         while getgenv().autofarm do 
             if getgenv().area then 
                 local _closestBlock = closestBlock()
-                if not _closestBlock or (player.Character.PrimaryPart.Position - _closestBlock.Position).magnitude > 150 then 
+                if not _closestBlock or (player.Character.PrimaryPart.Position - _closestBlock.Position).magnitude > 250 then 
                     teleportToArea(tonumber(getgenv().area))
                 end 
                 if not getgenv().legit then 
