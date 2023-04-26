@@ -119,11 +119,12 @@ function sell()
         wait(2)
         teleport(oldCFrame)
     end
-    teleport(workspace.Sell:WaitForChild("Zone"..getgenv().area).CFrame)
-    wait()
-    player.Character.Humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+    
     repeat
-        wait(.25)
+        teleport(workspace.Sell:WaitForChild("Zone"..getgenv().area).CFrame)
+        wait()
+        player.Character.Humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+        task.wait()
     until not shouldSell()
     if not getgenv().legit then
         teleport(oldCFrame)
