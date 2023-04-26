@@ -136,7 +136,7 @@ function teleportFarm()
     repeat 
         task.wait()
         local block = closestBlock()
-        if block then 
+        if block and not shouldSell() then 
             teleport(block.CFrame)
             block.CanCollide = false 
         end
