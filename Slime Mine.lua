@@ -1,7 +1,6 @@
 local scriptVersion = "2023-04-25T04:57:53.2998803Z"
 local MarketplaceService = game:GetService("MarketplaceService")
 local placeVersion = MarketplaceService:GetProductInfo(game.PlaceId).Updated
-
 local lib = loadstring(game:HttpGet("https://raw.githubusercontent.com/GreenDeno/Venyx-UI-Library/main/source.lua"))()
 
 local themes = {
@@ -37,7 +36,20 @@ local invUtil = require(game:GetService("ReplicatedStorage").Util.inventoryUtil)
 local infoHandler = knit.GetController("InformationController")
 local eggInfo = infoHandler:getInformation("eggInfo")
 local zoneInfo = infoHandler:getInformation("zonesInfo")
+local oreInfo = infoHandler:getInformation("blocksInfo")
 local dataController = knit.GetController("DataController")
+local uiController = knit.GetController("UIController")
+wait(2)
+local petHandlerTable
+for _,v in next, getgc(true) do 
+    if type(v) == 'table' and rawget(v, 'attackInfo') and rawget(v, 'maid') and rawget(v, 'petHandlers') then 
+        if v.player == game.Players.LocalPlayer then 
+            petHandlerTable = v
+        end
+    end 
+end
+
+getgenv().defaultAutoMining = uiController.autoMining
 
 local player = game:GetService("Players").LocalPlayer
 local services = game:GetService("ReplicatedStorage").Modules._Index["sleitnick_knit@1.4.7"].knit.Services
@@ -124,12 +136,31 @@ function sell()
         teleport(workspace.Sell:WaitForChild("Zone"..getgenv().area).CFrame)
         wait()
         player.Character.Humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
-        task.wait()
+        wait(.1)
     until not shouldSell()
     if not getgenv().legit then
         teleport(oldCFrame)
     end
     player.Character.PrimaryPart.Velocity = Vector3.new(0,0,0)
+end
+
+function attack(block)
+    if not block then return end
+    local arr = {}
+    for i,v in next, petHandlerTable.equipped do 
+        arr[tostring(v)] = {
+            ["targeted"] = true,
+            ["position"] = tonumber(i), 
+            ["blockName"] = tostring(block)
+        }
+    end 
+    
+    for _,v in next, petHandlerTable.equipped do    
+        task.spawn(function()
+            game:GetService("ReplicatedStorage").Modules._Index["sleitnick_knit@1.4.7"].knit.Services.PlayerService.RF.requestAction:InvokeServer("setAttackInfo", arr) 
+            game:GetService("ReplicatedStorage").Modules._Index["sleitnick_knit@1.4.7"].knit.Services.BlocksService.RF.attackBlock:InvokeServer(tostring(block), tostring(v))
+        end)
+    end
 end
 
 function teleportFarm()
@@ -139,30 +170,59 @@ function teleportFarm()
         if block and not shouldSell() then 
             teleport(block.CFrame)
             block.CanCollide = false 
+            attack(block)
+            wait()
         end
     until not block or not block.Parent or block.Parent.Name ~= "Blocks" or not getgenv().autofarm 
 end
-
+wait(1)
+warn("loading function")
 function closestBlock()
     local closestDistance, block = math.huge, nil
+    local ores = {}
+    local playerPos = player.Character.PrimaryPart.Position 
     for _,v in next, workspace.Blocks:GetChildren() do 
         if not getgenv().autofarm then break end 
         if v.Name:sub(1,1) == tostring(getgenv().area) then 
-            local _dist = (player.Character.PrimaryPart.Position-v.Position).magnitude 
-            if _dist < closestDistance and math.abs(player.Character.PrimaryPart.Position.Y-v.Position.Y) < 16 then 
+            local _dist = (playerPos-v.Position).magnitude
+            local children = v:GetChildren()
+            if #children > 8 then 
+                local orename 
+                for _2,v2 in next, children do 
+                    local oreData = oreInfo['blocks'][tostring(v2)]
+                    if oreData then 
+                        orename = tostring(v2)
+                        table.insert(ores, {
+                            ['block'] = v,
+                            ['rarity'] = oreInfo['raritiesScore'][oreData['rarity']] 
+                        })
+                        break 
+                    end 
+                end 
+            elseif _dist < closestDistance then 
                 closestDistance = _dist 
                 block = v 
             end 
-        end 
+        end
+    end
+    table.sort(ores, function(a,b)
+        return a['rarity'] > b['rarity']
+    end)
+    if #ores > 0 and not getgenv().legit then
+        return ores[1]['block']
     end
     return block
 end
-
+wait(1)
+warn("loaded")
+wait(1)
 function walkFarm()
     local block = closestBlock()
     if block then 
         pickup()
         player.Character.Humanoid:MoveTo(block.Position)
+        attack(block)
+        wait()
     end
     pickup()
 end
@@ -274,6 +334,7 @@ autofarmTab:addToggle("Legit Mode",false,function(value)
 autofarmTab:addToggle("Autofarm",false,function(value) 
    getgenv().autofarm = value
    if value then 
+        uiController.autoMining = false
         while getgenv().autofarm do 
             if getgenv().area then 
                 local _closestBlock = closestBlock()
@@ -288,6 +349,7 @@ autofarmTab:addToggle("Autofarm",false,function(value)
             end 
             wait(.2)
         end 
+        uiController.autoMining = getgenv().defaultAutoMining
     end
 end)
 
