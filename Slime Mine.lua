@@ -342,8 +342,8 @@ function teleportFarm()
         task.wait()
         local block = closestBlock()
         if block and not shouldSell() then 
-            --teleport(block.CFrame)
-            --block.CanCollide = false 
+            teleport(block.CFrame)
+            block.CanCollide = false 
             attack(block)
             task.wait()
         end
