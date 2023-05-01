@@ -363,21 +363,28 @@ function closestBlock()
         if block.Name:sub(1,1) == tostring(area) then 
             local distance = (playerPosition-block.Position).magnitude
             local children = block:GetChildren()
-            if #children > 8 then 
-                for _,child in pairs(children) do 
-                    local oreData = oreInfo['blocks'][tostring(child)]
-                    if oreData then 
-                        table.insert(ores, {
-                            ['block'] = block,
-                            ['rarity'] = oreInfo['raritiesScore'][oreData['rarity']] 
-                        })
-                        break 
+            if not getgenv().legit then
+                if #children > 8 then 
+                    for _,child in pairs(children) do 
+                        local oreData = oreInfo['blocks'][tostring(child)]
+                        if oreData then 
+                            table.insert(ores, {
+                                ['block'] = block,
+                                ['rarity'] = oreInfo['raritiesScore'][oreData['rarity']] 
+                            })
+                            break 
+                        end 
                     end 
+                elseif distance < closestDistance then 
+                    closestDistance = distance 
+                    closestBlock = block 
                 end 
-            elseif distance < closestDistance then 
-                closestDistance = distance 
-                closestBlock = block 
-            end 
+            else 
+                if distance < closestDistance then 
+                    closestDistance = distance 
+                    closestBlock = block 
+                end
+            end
         end
     end
     table.sort(ores, function(a,b)
