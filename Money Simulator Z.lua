@@ -55,9 +55,7 @@ task.spawn(function()
         task.wait() 
         if settings.upgradeMachines then 
             for i = 1 , 10 ,1 do 
-                if player.Stats["Machine"..tostring(i)].Value < player.Stats["FactoryUpgrade4"].Value + 1 then 
-                    game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("UpgradeMachine"):FireServer(unpack({i,2,true}))
-                end
+                game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("UpgradeMachine"):FireServer(unpack({i,2,true}))
             end 
         else 
             break 
