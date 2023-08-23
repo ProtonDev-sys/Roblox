@@ -1,4 +1,4 @@
-
+local settings = getgenv().settings
 local store = settings.enabled
 getgenv().settings.enabled = false
 wait(.5)
