@@ -1,18 +1,4 @@
-getgenv().settings = {
-    ["enabled"] = true,
-    ["boostGems"] = true,
-    ["collectGems"] = true,
-    ["boostMachines"] = true,
-    ["upgradeFactory"] = true,
-    ["upgradeFactoryDelay"] = 1.5,
-    ["upgradeMachines"] = true,
-    ["upgradeMachinesDelay"] = 1.5,
-    ["buyMachines"] = true,
-    ["buyMachinesDelay"] = 1.5,
-    ["autoMine"] = true, 
-    
-    
-}
+
 local store = settings.enabled
 getgenv().settings.enabled = false
 wait(.5)
