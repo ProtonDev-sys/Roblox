@@ -2042,7 +2042,7 @@ getgenv().settings = {
     ["buyMachines"] = false,
     ["buyMachinesDelay"] = 1,
     ["autoMine"] = false, 
-    
+	["autoMerge"] = false,
 }
 
 
@@ -2059,6 +2059,10 @@ end):Set(getgenv().settings.enabled)
 factory_tab:AddSwitch("Boost Gems", function(value)
     getgenv().settings.boostGems = value
 end):Set(getgenv().settings.boostGems)
+
+factory_tab:AddSwitch("Auto Merge Gems", function(value)
+    getgenv().settings.autoMerge = value
+end):Set(getgenv().settings.autoMerge)
 
 factory_tab:AddSwitch("Collect Gems", function(value)
     getgenv().settings.collectGems = value
@@ -2196,4 +2200,31 @@ task.spawn(function()
     end
 end)  
 
-warn("executed")
+function getClosest(num)
+	local dist = math.huge 
+	local part = nil 
+	for _,v in next, workspace.GemGrid.GridList:GetChildren() do 
+		if (v.Position - workspace.GemGrid["Grid"..tostring(num)].Position).Magnitude < dist then 
+			dist =  (v.Position - workspace.GemGrid["Grid"..tostring(num)].Position).Magnitude
+			part = v 
+		end 
+	end 
+	return part
+end
+
+task.spawn(function()
+    while settings.enabled do 
+        task.wait()
+        if settings.autoMerge then 
+            for i = 1 , 16 ,1 do 
+                for x = 1 , 16 ,1 do
+                    if i ~= x and getClosest(i).Name == getClosest(x).Name then 
+                        game:GetService("ReplicatedStorage").Events.GemGrid:FireServer(i,x)
+            
+                    end 
+                end
+            end
+            wait(3)
+        end 
+    end            
+end)
