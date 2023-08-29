@@ -2043,7 +2043,11 @@ getgenv().settings = {
     ["buyMachinesDelay"] = 1,
     ["autoMine"] = false, 
 	["autoMerge"] = false,
+    ["craftItem"] = "Aluminium",
+    ["craftAmount"] = 1,
 }
+
+local CraftList = game:GetService("ReplicatedStorage").CraftData.CraftList
 
 
 local window = library:AddWindow("Money Simulator Z")
@@ -2099,6 +2103,98 @@ end, {min = 0, max = 5}):Set((1.5/5)*100)
 mining_tab:AddSwitch("Auto Mine", function(value)
     getgenv().settings.autoMine = value
 end):Set(getgenv().settings.autoMine)
+
+local drop = mining_tab:AddDropdown("Craft Items", function(value)
+    getgenv().settings.craftItem = value
+end)
+
+mining_tab:AddSlider("Amount to craft", function(value)
+    getgenv().settings.craftAmount = value
+end, {min = 1, max = 20}):Set(1)
+
+
+local function getCraftRequirements(itemName, amount)
+    local requirements = {}
+    
+    local itemFolder = CraftList:FindFirstChild(itemName)
+    if not itemFolder then
+        return requirements
+    end
+
+    for _, child in ipairs(itemFolder:GetChildren()) do
+        if child:IsA("NumberValue") then
+            requirements[child.Name] = child.Value * amount
+        end
+    end
+
+    return requirements
+end
+
+local function topologicalSort(itemName, visited, stack, result)
+    if visited[itemName] then
+        return
+    end
+    
+    visited[itemName] = true
+    local requirements = getCraftRequirements(itemName, 1) -- we only need the item names, so amount is set to 1
+
+    for ingredient, _ in pairs(requirements) do
+        topologicalSort(ingredient, visited, stack, result)
+    end
+
+    table.insert(stack, itemName)
+end
+
+local function calculateCrafting(itemName, amount, result)
+    local requirements = getCraftRequirements(itemName, amount)
+
+    for ingredient, requiredAmount in pairs(requirements) do
+        if CraftList:FindFirstChild(ingredient) then
+            calculateCrafting(ingredient, requiredAmount, result)
+        end
+
+        result[ingredient] = (result[ingredient] or 0) + requiredAmount
+    end
+end
+
+local function getCraftingOrderAndAmount(itemName, amount)
+    local result = {}
+    calculateCrafting(itemName, amount, result)
+    
+    local visited = {}
+    local stack = {}
+    topologicalSort(itemName, visited, stack, result)
+
+    return result, stack
+end
+
+local function craft(itemName, amount)
+    local pos = game:GetService("Players").LocalPlayer.PlayerGui.GameGui.CraftFrame.Content.CraftList.CraftList:FindFirstChild(itemName).Position
+    local itemIndex = math.floor(pos.X.Scale / 0.333) + (math.floor(pos.Y.Scale / 0.1) * 3) + 1
+    warn(itemIndex)
+    game:GetService("ReplicatedStorage").Events.Craft:FireServer(itemIndex, amount)
+end
+
+
+
+mining_tab:AddButton("Craft Item", function()
+    local craftAmounts, craftOrder = getCraftingOrderAndAmount(getgenv().settings.craftItem, getgenv().settings.craftAmount)
+    
+    
+    for _, ingredient in ipairs(craftOrder) do
+        if ingredient ~= "ResearchPoints" and not game:GetService("ReplicatedStorage").Ores:FindFirstChild(ingredient.."1") and craftAmounts[ingredient] ~= nil then
+            warn("Craft", craftAmounts[ingredient], ingredient)
+            craft(ingredient, craftAmounts[ingredient])
+        end
+    end
+    
+    craft(getgenv().settings.craftItem, getgenv().settings.craftAmount)
+    
+end)
+
+for _,v in next, CraftList:GetChildren() do 
+    drop:Add(v.Name)
+end
 
 misc_tab:AddButton("Collect all secret bucks", function()
 	local cf = game.Players.LocalPlayer.Character.PrimaryPart.CFrame
@@ -2228,3 +2324,10 @@ task.spawn(function()
         end 
     end            
 end)
+
+
+
+
+
+
+
