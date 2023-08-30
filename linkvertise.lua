@@ -44,10 +44,15 @@ function Task:verify()
     return false
 end
 
-function Task:copyURL()
+function Task:getURL()
     local URLBase = "http://%s/v2/wait/%s"
     local URL = URLBase:format(self.API_HOST, self.task.id)
-    return setclipboard(URL)
+    return URL
+end
+
+function Task:copyURL(self)
+    
+    return setclipboard(self:getURL())
 end
 
 local nTask = Task.new(API_HOST, LINKVERTISE_ID, LINKVERTISE_COUNT, TOKEN_EXPIRE_TIME); nTask:create()
@@ -55,9 +60,9 @@ local Verified = false
 
 Iris:Connect(function()
     if not Verified then
-        Iris.Window({Title, [Iris.Args.Window.NoClose] = true, [Iris.Args.Window.NoResize] = true, [Iris.Args.Window.NoScrollbar] = true, [Iris.Args.Window.NoCollapse] = true}, {size = Iris.State(Vector2.new(375, 60))}) do
+        Iris.Window({Title, [Iris.Args.Window.NoClose] = true, [Iris.Args.Window.NoResize] = true, [Iris.Args.Window.NoScrollbar] = true, [Iris.Args.Window.NoCollapse] = true}, {size = Iris.State(Vector2.new(700, 60))}) do
             Iris.SameLine() do
-                if Iris.Button({"I have visited the website."}).clicked then
+                if Iris.Button({"I have visited the website. "..nTask:getURL()}).clicked then
                     task.spawn(function()
                         Verified = nTask:verify()
                     end)
