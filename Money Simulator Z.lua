@@ -2045,6 +2045,7 @@ getgenv().settings = {
 	["autoMerge"] = false,
     ["craftItem"] = "Aluminium",
     ["craftAmount"] = 1,
+	["diamondShopPurchase"] = false,
 }
 
 local CraftList = game:GetService("ReplicatedStorage").CraftData.CraftList
@@ -2196,6 +2197,15 @@ for _,v in next, CraftList:GetChildren() do
     drop:Add(v.Name)
 end
 
+mining_tab:AddSwitch("Diamond Shop", function(state)
+	getgenv().settings.diamondShopPurchase = state 
+	while getgenv().settings.diamondShopPurchase and wait(2) do 
+		for i = 1 , 4 , 1 do 
+			game:GetService("ReplicatedStorage").Events.RareDiamond:FireServer(i)
+		end 
+	end
+end)
+
 misc_tab:AddButton("Collect all secret bucks", function()
 	local cf = game.Players.LocalPlayer.Character.PrimaryPart.CFrame
 	for _,v in next, workspace.SecretBucks:GetChildren() do 
@@ -2286,8 +2296,15 @@ task.spawn(function()
         if settings.autoMine then 
             for _,ore in next, game:GetService("Workspace").Ores:GetChildren() do 
                 local speed = player.Character.Humanoid.WalkSpeed
+				local t = os.tick()
                 game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("MineOre"):FireServer(unpack({tonumber(ore.Name)}))
-                repeat task.wait() player.Character.Humanoid.WalkSpeed = speed until not settings.enabled or ore.Parent ~= workspace.Ores or not settings.autoMine
+                repeat 
+					task.wait() player.Character.Humanoid.WalkSpeed = speed 
+					if os.tick() - t > 5 then
+						t = os.tick()
+						game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("MineOre"):FireServer(unpack({tonumber(ore.Name)}))
+					end
+				until not settings.enabled or ore.Parent ~= workspace.Ores or not settings.autoMine
 				if not settings.enabled or not settings.autoMine then 
 					break 
 				end
