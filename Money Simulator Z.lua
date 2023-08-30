@@ -809,8 +809,6 @@ Windows.BackgroundTransparency = 1
 Windows.Position = UDim2.new(0, 20, 0, 20)
 Windows.Size = UDim2.new(1, 20, 1, -20)
 
---[[ Script ]]--
-script.Parent = imgui
 
 local UIS = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
@@ -820,8 +818,8 @@ local ps = game:GetService("Players")
 local p = ps.LocalPlayer
 local mouse = p:GetMouse()
 
-local Prefabs = script.Parent:WaitForChild("Prefabs")
-local Windows = script.Parent:FindFirstChild("Windows")
+local Prefabs = imgui:WaitForChild("Prefabs")
+local Windows = imgui:FindFirstChild("Windows")
 
 local checks = {
 	["binding"] = false,
@@ -829,9 +827,9 @@ local checks = {
 
 UIS.InputBegan:Connect(function(input, gameProcessed)
 	if input.KeyCode == ((typeof(ui_options.toggle_key) == "EnumItem") and ui_options.toggle_key or Enum.KeyCode.RightShift) then
-		if script.Parent then
+		if imgui then
 			if not checks.binding then
-				script.Parent.Enabled = not script.Parent.Enabled
+				imgui.Enabled = not imgui.Enabled
 			end
 		end
 	end
@@ -2296,12 +2294,12 @@ task.spawn(function()
         if settings.autoMine then 
             for _,ore in next, game:GetService("Workspace").Ores:GetChildren() do 
                 local speed = player.Character.Humanoid.WalkSpeed
-				local t = os.tick()
+				local t = tick()
                 game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("MineOre"):FireServer(unpack({tonumber(ore.Name)}))
                 repeat 
 					task.wait() player.Character.Humanoid.WalkSpeed = speed 
-					if os.tick() - t > 5 then
-						t = os.tick()
+					if tick() - t > 1 then
+						t = tick()
 						game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("MineOre"):FireServer(unpack({tonumber(ore.Name)}))
 					end
 				until not settings.enabled or ore.Parent ~= workspace.Ores or not settings.autoMine
