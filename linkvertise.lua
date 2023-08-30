@@ -50,8 +50,7 @@ function Task:getURL()
     return URL
 end
 
-function Task:copyURL(self)
-    
+function Task:copyURL()
     return setclipboard(self:getURL())
 end
 
