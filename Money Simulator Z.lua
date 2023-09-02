@@ -7,7 +7,7 @@
 
 local ui_options = {
 	main_color = Color3.fromRGB(41, 74, 122),
-	min_size = Vector2.new(400, 300),
+	min_size = Vector2.new(400, 500),
 	toggle_key = Enum.KeyCode.RightShift,
 	can_resize = true,
 }
@@ -2040,77 +2040,234 @@ getgenv().settings = {
     ["buyMachines"] = false,
     ["buyMachinesDelay"] = 1,
     ["autoMine"] = false, 
+	["miningPriority"] = {
+
+	},
+	["miningBlacklist"] = {
+
+	},
+	["selectedOre"] = nil,
 	["autoMerge"] = false,
     ["craftItem"] = "Aluminium",
     ["craftAmount"] = 1,
 	["diamondShopPurchase"] = false,
+	["walkSpeed"] = game.Players.LocalPlayer.Character.Humanoid.WalkSpeed
+	
 }
 
-local CraftList = game:GetService("ReplicatedStorage").CraftData.CraftList
-
+local replicatedStorage = game:GetService("ReplicatedStorage")
+local craftData = replicatedStorage.CraftData
+local CraftList = craftData.CraftList
 
 local window = library:AddWindow("Money Simulator Z")
 local factory_tab = window:AddTab("Factory")
 local mining_tab = window:AddTab("Mining")
+local teleport_tab = window:AddTab("Teleports")
 local misc_tab = window:AddTab("Misc")
 local settings_tab = window:AddTab("Settings")
 
+local settings = getgenv().settings
+
+teleport_tab:AddButton("Factory", function()
+	game.Players.LocalPlayer.Character.PrimaryPart.CFrame = workspace.SpawnLocation.CFrame + Vector3.new(0,2,0)
+end)
+
+teleport_tab:AddButton("City", function()
+	game.Players.LocalPlayer.Character.PrimaryPart.CFrame = CFrame.new(704.513245, 7.64234734, 134.697647, 0.955939233, -4.1481659e-08, 0.293564647, 4.18234904e-08, 1, 5.11283016e-09, -0.293564647, 7.390343e-09, 0.955939233)
+end)
+
+teleport_tab:AddButton("Mine", function()
+	replicatedStorage.Events.EnterMine:FireServer(1)
+end)
+
+teleport_tab:AddButton("Exit Mine", function()
+	game.Players.LocalPlayer.Character.PrimaryPart.CFrame = CFrame.new(704.513245, 7.64234734, 134.697647, 0.955939233, -4.1481659e-08, 0.293564647, 4.18234904e-08, 1, 5.11283016e-09, -0.293564647, 7.390343e-09, 0.955939233)
+	replicatedStorage.Events.EnterMine:FireServer(0)
+end)
+
 settings_tab:AddSwitch("Enable Script", function(value)
-    getgenv().settings.enabled = value
-end):Set(getgenv().settings.enabled)
+    settings.enabled = value
+end):Set(settings.enabled)
 
 factory_tab:AddSwitch("Boost Gems", function(value)
-    getgenv().settings.boostGems = value
-end):Set(getgenv().settings.boostGems)
+    settings.boostGems = value
+end):Set(settings.boostGems)
 
 factory_tab:AddSwitch("Auto Merge Gems", function(value)
-    getgenv().settings.autoMerge = value
-end):Set(getgenv().settings.autoMerge)
+    settings.autoMerge = value
+end):Set(settings.autoMerge)
 
 factory_tab:AddSwitch("Collect Gems", function(value)
-    getgenv().settings.collectGems = value
-end):Set(getgenv().settings.collectGems)
+    settings.collectGems = value
+end):Set(settings.collectGems)
 
 factory_tab:AddSwitch("Boost Machines", function(value)
-    getgenv().settings.boostMachines = value
-end):Set(getgenv().settings.boostMachines)
+    settings.boostMachines = value
+end):Set(settings.boostMachines)
+
+factory_tab:AddSlider("Boost Machine Speed", function(value)
+	settings.boostMachinesSpeed = value 
+end, {min = 1, max = 2}):Set(1)
 
 factory_tab:AddSwitch("Upgrade Factory", function(value)
-    getgenv().settings.upgradeFactory = value
-end):Set(getgenv().settings.upgradeFactory)
+    settings.upgradeFactory = value
+end):Set(settings.upgradeFactory)
 
 factory_tab:AddSlider("Upgrade Factory Delay", function(value)
-    getgenv().settings.upgradeFactoryDelay = value
+    settings.upgradeFactoryDelay = value
 end, {min = 0, max = 5}):Set((1.5/5)*100)
 
 factory_tab:AddSwitch("Upgrade Machines", function(value)
-    getgenv().settings.upgradeMachines = value
-end):Set(getgenv().settings.upgradeMachines)
+    settings.upgradeMachines = value
+end):Set(settings.upgradeMachines)
 
 factory_tab:AddSlider("Upgrade Machines Delay", function(value)
-    getgenv().settings.upgradeMachinesDelay = value
+    settings.upgradeMachinesDelay = value
 end, {min = 0, max = 5}):Set((1.5/5)*100)
 
 factory_tab:AddSwitch("Buy Machines", function(value)
-    getgenv().settings.buyMachines = value
-end):Set(getgenv().settings.buyMachines)
+    settings.buyMachines = value
+end):Set(settings.buyMachines)
 
 factory_tab:AddSlider("Buy Machines Delay", function(value)
-    getgenv().settings.buyMachinesDelay = value
+    settings.buyMachinesDelay = value
 end, {min = 0, max = 5}):Set((1.5/5)*100)
 
 mining_tab:AddSwitch("Auto Mine", function(value)
-    getgenv().settings.autoMine = value
-end):Set(getgenv().settings.autoMine)
+    settings.autoMine = value
+end):Set(settings.autoMine)
+
+
+local tree = {
+	
+	[1] = {
+		"Coal",
+		"RuneStone",
+		"OreEssence"
+	},
+	[2] = {
+		"Iron",
+		"RuneStone",
+		"OreEssence"
+	},
+	[3] = {
+		"Copper",
+		"RuneStone",
+		"OreEssence"
+	},
+	[4] = {
+		"Silver",
+		"RuneStone",
+		"OreEssence"
+	},
+	[5] = {
+		"Gold",
+		"RuneStone",
+		"OreEssence"
+	},
+	[6] = {
+		"Crystal",
+		"Opal",
+		"Lapis",
+		"Jasper",
+		"Jade",
+		"Topaz",
+		"RuneStone",
+		"OreEssence"
+	},
+	[7] = {
+		"Silicon",
+		"RuneStone",
+		"OreEssence"
+	},
+	[8] = {
+		"Diamond",
+		"RedDiamond",
+		"GreenDiamond",
+		"YellowDiamond",
+		"BlackDiamond",
+		"RuneStone",
+		"OreEssence"
+	}
+}
+
+
+
+local prioritySlider 
+local blacklistedToggle 
+local priorityDropdown
+priorityDropdown = mining_tab:AddDropdown("Mining Priority", function(value)
+	settings.selectedOre = value
+	local priority = settings.miningPriority[value] or 0
+	local blacklisted = settings.miningBlacklist[settings.selectedOre] or false
+	prioritySlider:Set(priority)
+	blacklistedToggle:Set(blacklisted)
+	warn(priority)
+	warn(blacklisted)
+end)
+
+local drops = {
+
+}
+
+
+if game.Players.LocalPlayer.Stats.Mine.Value ~= 0 then
+	for _,v in next, tree[game.Players.LocalPlayer.Stats.Mine.Value]  do 
+		drops[v] = priorityDropdown:Add(v)
+	end
+end
+
+game.Players.LocalPlayer.Stats.Mine:GetPropertyChangedSignal("Value"):Connect(function()
+    for _,v in next, drops do 
+		v:Remove()
+	end 
+	for _,v in next, tree[game.Players.LocalPlayer.Stats.Mine.Value] do 
+		drops[v] = priorityDropdown:Add(v)
+	end
+	for _,v in next, tree[0] do 
+		drops[v] = priorityDropdown:Add(v)
+	end
+end)
+
+
+
+
+prioritySlider = mining_tab:AddSlider("Priority Slider", function(value)
+	if not settings.selectedOre then prioritySlider:Set(0) return end
+	settings.miningPriority[settings.selectedOre] = value
+end, {min = 0, max = 5})
+prioritySlider:Set(0)
+blacklistedToggle = mining_tab:AddSwitch("Blacklist Ore", function(value)
+	if not settings.selectedOre then blacklistedToggle:Set(false) return end
+	settings.miningBlacklist[settings.selectedOre] = value
+end)
+blacklistedToggle:Set(false)
 
 local drop = mining_tab:AddDropdown("Craft Items", function(value)
-    getgenv().settings.craftItem = value
+    settings.craftItem = value
 end)
 
 mining_tab:AddSlider("Amount to craft", function(value)
-    getgenv().settings.craftAmount = value
+    settings.craftAmount = value
 end, {min = 1, max = 20}):Set(1)
 
+local workspaceOres = workspace.Ores
+
+workspaceOres.ChildAdded:Connect(function(ore)
+	wait()
+	if settings.betterOreXray then 
+		if ore:FindFirstChild("OreHighlight") then 
+			ore.OreHighlight:Destroy()
+		end
+		if not ore:FindFirstChild("Highlight") then 
+			
+			local highlight = Instance.new("Highlight")
+			highlight.Adornee = ore 
+			highlight.Enabled = true 
+			highlight.Parent = ore 
+		end
+	end
+end)
 
 local function getCraftRequirements(itemName, amount)
     local requirements = {}
@@ -2167,28 +2324,50 @@ local function getCraftingOrderAndAmount(itemName, amount)
     return result, stack
 end
 
+function getAmount(name)
+	if game.Players.LocalPlayer.Stats:FindFirstChild(name) then
+		return game.Players.LocalPlayer.Stats:FindFirstChild(name).Value 
+	else 
+		local craftInventory = game.Players.LocalPlayer.Stats.CraftInventory.Value
+		for _,v in next, craftInventory:split(":") do
+			local split = v:split(">")
+			local n,am = split[1], split[2]
+			if n == name then 
+				return tonumber(am)
+			end
+		end
+	end
+	return 0
+end
+
 local function craft(itemName, amount)
-    local pos = game:GetService("Players").LocalPlayer.PlayerGui.GameGui.CraftFrame.Content.CraftList.CraftList:FindFirstChild(itemName).Position
-    local itemIndex = math.floor(pos.X.Scale / 0.333) + (math.floor(pos.Y.Scale / 0.1) * 3) + 1
-    warn(itemIndex)
-    game:GetService("ReplicatedStorage").Events.Craft:FireServer(itemIndex, amount)
+	local pos = game:GetService("Players").LocalPlayer.PlayerGui.GameGui.CraftFrame.Content.CraftList.CraftList:FindFirstChild(itemName).Position
+	local itemIndex = math.floor(pos.X.Scale / 0.333) + (math.floor(pos.Y.Scale / 0.1) * 3) + 1
+	local ownedAmount = getAmount(itemName)
+	amount = math.max(amount-ownedAmount, 0)
+	
+	if amount > 0 then
+		game:GetService("ReplicatedStorage").Events.Craft:FireServer(itemIndex, amount)
+	end
 end
 
 
+local craftBlacklist = {
+	["OreEssence"] = true,
+	["RedDiamond"] = true,
+	["ResearchPoints"] = true
+}
 
 mining_tab:AddButton("Craft Item", function()
     local craftAmounts, craftOrder = getCraftingOrderAndAmount(getgenv().settings.craftItem, getgenv().settings.craftAmount)
-    
-    
-    for _, ingredient in ipairs(craftOrder) do
-        if ingredient ~= "ResearchPoints" and not game:GetService("ReplicatedStorage").Ores:FindFirstChild(ingredient.."1") and craftAmounts[ingredient] ~= nil then
-            warn("Craft", craftAmounts[ingredient], ingredient)
-            craft(ingredient, craftAmounts[ingredient])
-        end
-    end
-    
-    craft(getgenv().settings.craftItem, getgenv().settings.craftAmount)
-    
+    pcall(function()
+		for _, ingredient in ipairs(craftOrder) do
+			if not rawget(craftBlacklist, ingredient) and not game:GetService("ReplicatedStorage").Ores:FindFirstChild(ingredient.."1") then
+				craft(ingredient, craftAmounts[ingredient] + 1)
+			end
+		end
+	end)
+    craft(getgenv().settings.craftItem, getAmount(getgenv().settings.craftItem) + getgenv().settings.craftAmount)
 end)
 
 for _,v in next, CraftList:GetChildren() do 
@@ -2204,6 +2383,15 @@ mining_tab:AddSwitch("Diamond Shop", function(state)
 	end
 end)
 
+mining_tab:AddButton("Open Ore Shop", function()
+	local frame = game.Players.LocalPlayer.PlayerGui.GameGui.OresUpgrades
+	if frame.Position == UDim2.new(.25, 0, .2, 0) then 
+		frame.Position = UDim2.new(.25, 0, -1, 0)
+	else 
+		frame.Position = UDim2.new(.25, 0, .2, 0)
+	end
+end)
+
 misc_tab:AddButton("Collect all secret bucks", function()
 	local cf = game.Players.LocalPlayer.Character.PrimaryPart.CFrame
 	for _,v in next, workspace.SecretBucks:GetChildren() do 
@@ -2212,6 +2400,142 @@ misc_tab:AddButton("Collect all secret bucks", function()
 	end
 	game.Players.LocalPlayer.Character.PrimaryPart.CFrame = cf 
 end)
+
+
+local runes = game.Players.LocalPlayer.Stats.Runes.Value 
+local split = runes:split(":")
+
+indexList = {
+    ["BA"] = "Money",
+    ["BB"] = "XP",
+    ["BC"] = "Gems",
+    ["BD"] = "Stone",
+    ["BE"] = "PrestigePoints",
+    ["BF"] = "RebirthPoints",
+    ["BG"] = "Damage"
+}
+
+local actualRunes = {}
+
+for runeIndex,v in next, split do 
+    local split = v:split(";")
+    local runeData = {
+        ["Index"] = runeIndex,
+    }
+    local last
+    local ind = 1
+    local tier, otherTier
+    for _,v in next, split do 
+        split = v:split(">")
+        if not tier then
+            otherTier = split[3]
+            tier = split[2]
+        end
+        for _,v in next, split do 
+            if last ~= nil then 
+                runeData[last] = v*tier*otherTier
+                last = nil
+            elseif indexList[v] ~= nil then 
+                last = indexList[v]
+                ind += 1
+            end 
+        end
+    end
+    if ind > 1 then
+        table.insert(actualRunes, runeData)
+    end
+end
+
+function hasStats(stat)
+    local runtable = {}
+    for _,v in next, actualRunes do 
+        if v[stat] then 
+            table.insert(runtable, v)
+        end 
+    end 
+    return runtable
+end
+
+
+function sortRunes(sortBy)
+    local runesTableSorted = hasStats(sortBy)
+    table.sort(runesTableSorted, function(a, b) 
+        local stat1 = a[sortBy]
+        local stat2 = b[sortBy]
+        if not stat1 then 
+            return false 
+        elseif not stat2 then 
+            return true 
+        end 
+        return stat1 > stat2
+    end)
+    
+    for _,v in next, actualRunes do 
+        warn(_,v[sortBy])
+    end
+    return runesTableSorted
+end
+
+function equipBestRunes(stat)
+    game:GetService("ReplicatedStorage").Events.BuyRune.UnequipAllRunes:FireServer()
+    for _,v in next, sortRunes(stat) do 
+        game:GetService("ReplicatedStorage").Events.BuyRune.EquipRune:FireServer(v.Index)
+    end
+end
+
+
+--local runeDrop = misc_tab:AddDropdown("Best Rune Stats", function(value)
+--    getgenv().settings.bestRuneStat = value
+--end)
+
+--for _,v in next, indexList do 
+--	runeDrop:Add(v)
+--end
+
+--misc_tab:AddButton("Equip best runes", function()
+--	equipBestRunes(getgenv().settings.bestRuneStat)
+--end)
+
+misc_tab:AddButton("Prestige and upgrade stuff all at once", function()
+	game:GetService("ReplicatedStorage").Events.Prestige:FireServer()
+	wait()
+	for i = 1 , 50 ,1 do 
+		for c = 0 , 5 , 1 do 
+			local ohNumber1 = i
+			local ohNumber2 = 50
+
+			game:GetService("ReplicatedStorage").Events.PrestigeUpgrade:FireServer(ohNumber1, ohNumber2)
+		end
+		wait()
+	end
+end)
+
+misc_tab:AddSwitch("Player Visibility", function(state)
+	settings.playerVisibility = state 
+	while settings.playerVisibility do 
+		task.wait() 
+		for _,v in next, game:GetService("Players"):GetPlayers() do 
+			for _,v in next, v.Character:GetDescendants() do 
+				if v:IsA("BasePart") and v.Name ~= "HumanoidRootPart" then 
+					v.Transparency = 0
+				end 
+			end 
+		end
+	end
+	for _,v in next, game:GetService("Players"):GetPlayers() do 
+		if v.Name ~= game.Players.LocalPlayer.Name then 
+			for _,v in next, v.Character:GetDescendants() do 
+				if v:IsA("BasePart") then 
+					v.Transparency = 1
+				end 
+			end 
+		end
+	end
+end)
+
+misc_tab:AddSlider("Walkspeed", function(value)
+	settings.walkSpeed = value 
+end, {min=16,max=100}):Set(settings.walkSpeed)
 
 
 local store = settings.enabled
@@ -2225,15 +2549,53 @@ for _,idled in next, getconnections(player.Idled) do
     idled:Disable()
 end
 
+task.spawn(function()
+	while settings.enabled do 
+		task.wait()
+		if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then 
+			game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = settings.walkSpeed 
+		end 
+	end 
+end)
+
+
+mining_tab:AddSwitch("Better OreXray", function(state)
+	getgenv().settings.betterOreXray = state 
+	if getgenv().settings.betterOreXray then 
+		for _,ore in next, workspace.Ores:GetChildren() do
+			if ore:FindFirstChild("OreHighlight") then 
+				ore.OreHighlight:Destroy()
+			end
+			if not ore:FindFirstChild("Highlight") then 
+				
+				local highlight = Instance.new("Highlight")
+				highlight.Adornee = ore 
+				highlight.Enabled = true 
+				highlight.Parent = ore 
+			end
+		end 
+	else 
+		for _,ore in next, workspace.Ores:GetChildren() do
+			if ore:FindFirstChild("Highlight") then 
+				ore.Highlight:Destroy()
+			end
+		end
+	end
+end):Set(true)
 
 task.spawn(function()
     while settings.enabled do
         wait()
         if settings.boostGems then 
-            game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("BoostGem"):FireServer()
+            game:GetService("ReplicatedStorage").Events.BoostGem:FireServer()
         end 
         if settings.boostMachines then 
-            game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("GenerateFaster"):FireServer()
+			for i = 0 , settings.boostMachinesSpeed , 1 do
+				for c = 1,4,1 do 
+					fireclickdetector(workspace.MachineBoost["MachineBoost"..c].ClickDetector)
+				end
+            	--game:GetService("ReplicatedStorage").Events.GenerateFaster:FireServer()
+			end
         end
         if settings.collectGems then 
             for _,v in next, game:GetService("Workspace").Factory.Gems:GetChildren() do 
@@ -2247,14 +2609,15 @@ local factoryUpgradeLimits = {
     [1] = 20,
     [2] = 18,
     [3] = math.huge,
-    [4] = 9
+    [4] = 9,
+	[5] = 20,
 }
 
 task.spawn(function()
     while settings.enabled do 
         task.wait()
         if settings.upgradeFactory then 
-            for i = 1 , 4 , 1 do 
+            for i = 1 , 5 , 1 do 
                 if player.Stats["FactoryUpgrade"..tostring(i)].Value < factoryUpgradeLimits[i] then
                     game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("FactoryUpgrade"):FireServer(unpack({i,false}))
                 end
@@ -2280,24 +2643,50 @@ task.spawn(function()
         task.wait()
         if settings.buyMachines then 
             for i = 1 , 10 , 1 do 
-                game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("BuyMachine"):FireServer(unpack({i,true}))
-                game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("BuyMoreMachines"):FireServer(unpack({i,1,true}))
+                game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("BuyMachine"):FireServer(i,true)
+                game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("BuyMoreMachines"):FireServer(i,1,true)
             end
             wait(settings.buyMachinesDelay) 
         end 
     end 
 end) 
 
+
+function getNextOre()
+    local ores = {}
+
+    for _, ore in next, workspace.Ores:GetChildren() do
+        local oreName = ore:FindFirstChild("OreName")
+        if oreName and not settings.miningBlacklist[oreName.Value] then
+            local priority = settings.miningPriority[oreName.Value] or 0
+            table.insert(ores, {ore = ore, priority = priority})
+        end
+    end
+
+	
+    table.sort(ores, function(a, b)
+        return a.priority > b.priority
+    end)
+	for _,v in next, ores do 
+		warn(_,v)
+	end
+	if ores[1] then 
+    	return ores[1].ore
+	else
+		return false
+	end
+end
+
 task.spawn(function()
     while settings.enabled do 
         task.wait() 
         if settings.autoMine then 
-            for _,ore in next, game:GetService("Workspace").Ores:GetChildren() do 
-                local speed = player.Character.Humanoid.WalkSpeed
+            local ore = getNextOre()
+			if ore then 
 				local t = tick()
-                game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("MineOre"):FireServer(unpack({tonumber(ore.Name)}))
-                repeat 
-					task.wait() player.Character.Humanoid.WalkSpeed = speed 
+				game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("MineOre"):FireServer(unpack({tonumber(ore.Name)}))
+				repeat 
+					task.wait()
 					if tick() - t > 1 then
 						t = tick()
 						game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("MineOre"):FireServer(unpack({tonumber(ore.Name)}))
@@ -2306,39 +2695,40 @@ task.spawn(function()
 				if not settings.enabled or not settings.autoMine then 
 					break 
 				end
-            end
+			end
         end 
     end
 end)  
 
-function getClosest(num)
-	local dist = math.huge 
-	local part = nil 
-	for _,v in next, workspace.GemGrid.GridList:GetChildren() do 
-		if (v.Position - workspace.GemGrid["Grid"..tostring(num)].Position).Magnitude < dist then 
-			dist =  (v.Position - workspace.GemGrid["Grid"..tostring(num)].Position).Magnitude
-			part = v 
-		end 
-	end 
-	return part
+function formatGrid()
+    local grid = {}
+
+    local gridValue = game:GetService("Players").LocalPlayer.Stats.GemGrid.Value 
+
+    for _,v in next, gridValue:split(":") do 
+        table.insert(grid, v)
+    end
+	return grid
 end
 
 task.spawn(function()
     while settings.enabled do 
-        task.wait()
+        wait(.1) 
         if settings.autoMerge then 
-            for i = 1 , 16 ,1 do 
-                for x = 1 , 16 ,1 do
-                    if i ~= x and getClosest(i).Name == getClosest(x).Name then 
-                        game:GetService("ReplicatedStorage").Events.GemGrid:FireServer(i,x)
-            
-                    end 
+            local grid = formatGrid()
+            for i = 1, #grid do
+                for j = i + 1, #grid do
+                    if i ~= j and grid[i] == grid[j] then
+                        game:GetService("ReplicatedStorage").Events.GemGrid:FireServer(i, j)
+						wait(.1)
+                        break
+                    end
                 end
             end
-            wait(3)
         end 
-    end            
+    end 
 end)
+
 
 
 
