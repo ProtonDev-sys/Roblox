@@ -2040,12 +2040,9 @@ getgenv().settings = {
     ["buyMachines"] = false,
     ["buyMachinesDelay"] = 1,
     ["autoMine"] = false, 
-	["miningPriority"] = {
-
-	},
-	["miningBlacklist"] = {
-
-	},
+	["miningPriority"] = {},
+	["miningBlacklist"] = {},
+	["autoOreUpgrades"] = {},
 	["selectedOre"] = nil,
 	["autoMerge"] = false,
     ["craftItem"] = "Aluminium",
@@ -2202,8 +2199,6 @@ priorityDropdown = mining_tab:AddDropdown("Mining Priority", function(value)
 	local blacklisted = settings.miningBlacklist[settings.selectedOre] or false
 	prioritySlider:Set(priority)
 	blacklistedToggle:Set(blacklisted)
-	warn(priority)
-	warn(blacklisted)
 end)
 
 local drops = {
@@ -2222,9 +2217,6 @@ game.Players.LocalPlayer.Stats.Mine:GetPropertyChangedSignal("Value"):Connect(fu
 		v:Remove()
 	end 
 	for _,v in next, tree[game.Players.LocalPlayer.Stats.Mine.Value] do 
-		drops[v] = priorityDropdown:Add(v)
-	end
-	for _,v in next, tree[0] do 
 		drops[v] = priorityDropdown:Add(v)
 	end
 end)
@@ -2470,9 +2462,7 @@ function sortRunes(sortBy)
         return stat1 > stat2
     end)
     
-    for _,v in next, actualRunes do 
-        warn(_,v[sortBy])
-    end
+
     return runesTableSorted
 end
 
@@ -2583,6 +2573,42 @@ mining_tab:AddSwitch("Better OreXray", function(state)
 	end
 end):Set(true)
 
+function getOreUpgrades()
+	local list = game.Players.LocalPlayer.PlayerGui.GameGui.OresUpgrades.Content["List1"]:GetChildren() 
+	local arr = {}
+	for i = 1, #list, 1 do 
+		local item = game.Players.LocalPlayer.PlayerGui.GameGui.OresUpgrades.Content["List1"]["Upgrade"..i]
+		arr[i] = item.UpgradeName.Text 
+	end 
+	return arr
+end
+
+local oreUpgradesArray = getOreUpgrades()
+local upgradeToggle
+
+local oreUpgradesDropdown = mining_tab:AddDropdown("Select Ore Upgrade", function(value)
+	settings.selectedOreUpgrade = value 
+	upgradeToggle:Set(settings.autoOreUpgrades[value] or false)
+end)
+
+for _,v in next, oreUpgradesArray do 
+	oreUpgradesDropdown:Add(v)
+end
+
+upgradeToggle = mining_tab:AddSwitch("Auto Upgrade", function(value)
+	local selected = settings.selectedOreUpgrade
+	if not selected then 
+		return 
+	end
+	settings.autoOreUpgrades[selected] = value
+	task.spawn(function()
+		warn(selected)
+		while settings.autoOreUpgrades[selected] and wait(.1) do 
+			replicatedStorage.Events.OreUpgrade:FireServer(table.find(oreUpgradesArray, selected), 1)
+		end
+	end)
+end)
+
 task.spawn(function()
     while settings.enabled do
         wait()
@@ -2667,9 +2693,7 @@ function getNextOre()
     table.sort(ores, function(a, b)
         return a.priority > b.priority
     end)
-	for _,v in next, ores do 
-		warn(_,v)
-	end
+
 	if ores[1] then 
     	return ores[1].ore
 	else
