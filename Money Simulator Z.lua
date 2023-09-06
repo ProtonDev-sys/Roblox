@@ -16,7 +16,6 @@ Window = Library:CreateWindow({
     MenuFadeTime = 0.2
 })
 
-
 local Tabs = {
     Factory = Window:AddTab("Factory"),
     Mining = Window:AddTab("Mining"),
@@ -633,13 +632,44 @@ do
         end
     })
 
+    leftAutoBuyGroup:AddDropdown('OreUpgrades', {
+        Values = tmp(player.PlayerGui.GameGui.OresUpgrades.Content.List1, "UpgradeName"),
+        Default = 0,
+        Multi = true,
+
+        Text = 'Upgrade Ore Upgrades',
+        Tooltip = 'Automatically upgrade the ore upgrades for you.',
+        Callback = function(value)
+            local ind = 0 
+            for _,v in next, Options.OreUpgrades.Value do 
+                ind += 1 
+            end
+            while Options.OreUpgrades.Value == value and ind > 0 do 
+                task.wait()
+
+                for _,v in next, Options.OreUpgrades.Value do 
+                    local ind 
+                    for _2,v2 in next, player.PlayerGui.GameGui.OresUpgrades.Content.List1:GetChildren() do 
+                        if v2:FindFirstChild("UpgradeName") and v2.UpgradeName.Text == _ then 
+                            ind = tonumber(string.split(v2.Name, "Upgrade")[2])
+                            break 
+                        end
+                    end 
+                    warn(ind)
+                    events.OreUpgrade:FireServer(ind, 999)
+                    wait(.4)
+                end 
+            end
+        end
+    })
+
     leftAutoBuyGroup:AddDropdown('RareDiamonds', {
         Values = tmp(player.PlayerGui.GameGui.RareDiamonds.Content.List1, "UpgradeName"),
         Default = 0,
         Multi = true,
 
         Text = 'Upgrade Rare Diamonds',
-        Tooltip = 'Automatically upgrade the merge gem upgrades for you.',
+        Tooltip = 'Automatically upgrade the rare diamonds upgrades for you.',
         Callback = function(value)
             local ind = 0 
             for _,v in next, Options.RareDiamonds.Value do 
