@@ -530,6 +530,8 @@ end
 
 do 
     local leftAutoBuyGroup = Tabs["Auto Buy"]:AddLeftGroupbox('Factory')
+    local rightAutoBuyGroup = Tabs["Auto Buy"]:AddLeftGroupbox('Mine')
+    
     local tmp = function(aa, name)
         local arr = {}
         for _,v in next, aa:GetChildren() do 
@@ -539,6 +541,7 @@ do
         end 
         return arr
     end
+
     leftAutoBuyGroup:AddDropdown('Factory', {
         Values = tmp(game.Players.LocalPlayer.PlayerGui.GameGui.UpgradesFrame.Content.FactoryUpgrades.List, "UpgradeName"),
         Default = 0,
@@ -632,7 +635,7 @@ do
         end
     })
 
-    leftAutoBuyGroup:AddDropdown('OreUpgrades', {
+    rightAutoBuyGroup:AddDropdown('OreUpgrades', {
         Values = tmp(player.PlayerGui.GameGui.OresUpgrades.Content.List1, "UpgradeName"),
         Default = 0,
         Multi = true,
@@ -663,7 +666,7 @@ do
         end
     })
 
-    leftAutoBuyGroup:AddDropdown('RareDiamonds', {
+    rightAutoBuyGroup:AddDropdown('RareDiamonds', {
         Values = tmp(player.PlayerGui.GameGui.RareDiamonds.Content.List1, "UpgradeName"),
         Default = 0,
         Multi = true,
