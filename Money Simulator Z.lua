@@ -8,6 +8,11 @@ local SaveManager = loadstring(game:HttpGet(repo .. 'addons/SaveManager.lua'))()
 local player = game:GetService("Players").LocalPlayer
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local events = ReplicatedStorage:WaitForChild("Events")
+
+for _,v in next, getconnetions(player.Idled) do 
+    v:Disable()
+end
+
 Window = Library:CreateWindow({
     Title = 'Money Simulator Z',
     Center = true,
