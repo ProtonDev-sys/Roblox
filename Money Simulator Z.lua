@@ -9,7 +9,7 @@ local player = game:GetService("Players").LocalPlayer
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local events = ReplicatedStorage:WaitForChild("Events")
 
-for _,v in next, getconnetions(player.Idled) do 
+for _,v in next, getconnections(player.Idled) do 
     v:Disable()
 end
 
