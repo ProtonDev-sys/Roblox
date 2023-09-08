@@ -142,9 +142,18 @@ TreeLeftBox:AddToggle('CollectTree', {
 
 local function shouldPrestigeTree()
     local gain = string.gsub(string.gsub(game:GetService("Workspace").PrestigeBoard.SurfaceGui.About.PrestigeFrame.PowderGain.Text, "+", ""), ",", "")
-    gain = tonumber(gain)
+    local unabbreviatedGain = 0
+    local suffix = string.sub(gain, -1)
+    local number = tonumber(string.sub(gain, 1, -2))
+    if suffix == "M" then
+        unabbreviatedGain = number * 1000000
+    elseif suffix == "B" then
+        unabbreviatedGain = number * 1000000000
+    elseif suffix == "T" then
+        unabbreviatedGain = number * 1000000000000
+    end
 
-    if gain and (gain/player.Stats.TreePrestigePoints.Value) * 100 > getgenv().PrestigeTreePercentage then
+    if unabbreviatedGain and (unabbreviatedGain/player.Stats.TreePrestigePoints.Value) * 100 > getgenv().PrestigeTreePercentage then
         return true
     else 
         return false
