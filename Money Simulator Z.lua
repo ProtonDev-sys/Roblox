@@ -656,7 +656,7 @@ do
     })
 
     leftTreeAutoBuyGroup:AddDropdown('MoreTreeUpgrades', {
-        Values = tmp(game:GetService("Players").ProtonDev_Sys.PlayerGui.GameGui.TreeUpgrades.Content.List1, "UpgradeName"),
+        Values = tmp(player.PlayerGui.GameGui.TreeUpgrades.Content.List1, "UpgradeName"),
         Default = 0,
         Multi = true,
 
@@ -672,7 +672,7 @@ do
 
                 for _,v in next, Options.MoreTreeUpgrades.Value do 
                     local ind 
-                    for _2,v2 in next, game:GetService("Players").ProtonDev_Sys.PlayerGui.GameGui.TreeUpgrades.Content.List1:GetChildren() do 
+                    for _2,v2 in next, player.PlayerGui.GameGui.TreeUpgrades.Content.List1:GetChildren() do 
                         if v2:FindFirstChild("UpgradeName") and v2.UpgradeName.Text == _ then 
                             ind = tonumber(string.split(v2.Name, "Upgrade")[2])
                             break 
