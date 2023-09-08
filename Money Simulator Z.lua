@@ -130,7 +130,7 @@ TreeLeftBox:AddToggle('CollectTree', {
     Tooltip = 'Automatically collects the money dropped from the tree for you.',
 
     Callback = function(Value)
-        while Toggles.ClickTree.Value do 
+        while Toggles.CollectTree.Value do 
             wait() 
             for _,v in next, game:GetService("Workspace").Factory.TreeObjects:GetChildren() do 
                 v.CanCollide = false
@@ -144,7 +144,7 @@ local function shouldPrestigeTree()
     local gain = string.gsub(string.gsub(game:GetService("Workspace").PrestigeBoard.SurfaceGui.About.PrestigeFrame.PowderGain.Text, "+", ""), ",", "")
     gain = tonumber(gain)
 
-    if (gain/player.Stats.TreePrestigePoints.Value) * 100 > getgenv().PrestigeTreePercentage then 
+    if gain and (gain/player.Stats.TreePrestigePoints.Value) * 100 > getgenv().PrestigeTreePercentage then
         return true
     else 
         return false
@@ -710,7 +710,7 @@ do
                         end
                     end 
                     
-                    events.MoreTreeUpgrade:FireServer(ind)
+                    events.GoldTreeUpgrade:FireServer(ind)
                     wait(.4)
                 end 
             end
