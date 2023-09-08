@@ -33,6 +33,7 @@ local Tabs = {
 
 local FactoryLeftBox = Tabs.Factory:AddLeftGroupbox('Clicking')
 local FactoryRightBox = Tabs.Factory:AddRightGroupbox('Factory Upgrades')
+local TreeLeftBox = Tabs.Factory:AddRightGroupbox('Tree')
 
 FactoryLeftBox:AddToggle('BoostMachines', {
     Text = 'Boost Machines',
@@ -107,6 +108,75 @@ FactoryLeftBox:AddToggle('MergeGems', {
                 end
             end
         end
+    end
+})
+
+TreeLeftBox:AddToggle('ClickTree', {
+    Text = 'Click Tree',
+    Default = false, 
+    Tooltip = 'Automatically clicks the tree for you.',
+
+    Callback = function(Value)
+        while Toggles.ClickTree.Value do 
+            wait() 
+            events.HitTree:FireServer()
+        end
+    end
+})
+
+TreeLeftBox:AddToggle('CollectTree', {
+    Text = 'Collect Tree',
+    Default = false, 
+    Tooltip = 'Automatically collects the money dropped from the tree for you.',
+
+    Callback = function(Value)
+        while Toggles.ClickTree.Value do 
+            wait() 
+            for _,v in next, game:GetService("Workspace").Factory.TreeObjects:GetChildren() do 
+                v.CanCollide = false
+                v.CFrame = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
+            end
+        end
+    end
+})
+
+local function shouldPrestigeTree()
+    local gain = string.gsub(string.gsub(game:GetService("Workspace").PrestigeBoard.SurfaceGui.About.PrestigeFrame.PowderGain.Text, "+", ""), ",", "")
+    gain = tonumber(gain)
+
+    if (gain/player.Stats.TreePrestigePoints.Value) * 100 > getgenv().PrestigeTreePercentage then 
+        return true
+    else 
+        return false
+    end
+end
+
+TreeLeftBox:AddToggle('PrestigeTree', {
+    Text = 'Auto Prestige Tree',
+    Default = false, 
+    Tooltip = 'Automatically prestige the tree for you.',
+
+    Callback = function(Value)
+        while Toggles.PrestigeTree.Value do
+            wait() 
+            if shouldPrestigeTree() then
+                events.TreePrestige:FireServer()
+            end
+        end
+    end
+})
+
+prioritySlider = TreeLeftBox:AddSlider('PrestigeTreePercentage', {
+    Text = 'Percentage to prestige tree',
+    Default = 50,
+    Min = 0,
+    Max = 500,
+    Rounding = 0,
+    Compact = false,
+    HideMax = true, 
+
+    Callback = function(value)
+        getgenv().PrestigeTreePercentage = value
     end
 })
 
@@ -261,9 +331,9 @@ MiningLeftBox:AddToggle('AutoMine', {
 do 
     getgenv().miningBlacklist = {}
     getgenv().miningPriority = {}
-    local prioritySlider 
+    local prioritySlider
     local blacklistedToggle
-    local MiningDropdown 
+    local MiningDropdown
     MiningDropdown = MiningLeftBox:AddDropdown('MiningDropdown', {
         Values = {},
         Default = 1,
@@ -281,7 +351,7 @@ do
     })
 
     prioritySlider = MiningLeftBox:AddSlider('MiningPriority', {
-        Text = 'Priority', 
+        Text = 'Priority',
         Default = 0,
         Min = 0,
         Max = 5,
@@ -290,7 +360,7 @@ do
         HideMax = true, 
 
         Callback = function(value)
-            if not getgenv().selectedOre and value > 0 then 
+            if not getgenv().selectedOre and value > 0 then
                 prioritySlider:SetValue(0)
             else 
                 getgenv().miningPriority[getgenv().selectedOre] = value 
@@ -361,6 +431,11 @@ do
             "GreenDiamond",
             "YellowDiamond",
             "BlackDiamond",
+            "RuneStone",
+            "OreEssence"
+        },
+        [9] = {
+            "MegaStone",
             "RuneStone",
             "OreEssence"
         }
@@ -535,8 +610,9 @@ end
 
 do 
     local leftAutoBuyGroup = Tabs["Auto Buy"]:AddLeftGroupbox('Factory')
-    local rightAutoBuyGroup = Tabs["Auto Buy"]:AddLeftGroupbox('Mine')
-    
+    local rightAutoBuyGroup = Tabs["Auto Buy"]:AddRightGroupbox('Mine')
+    local leftTreeAutoBuyGroup = Tabs["Auto Buy"]:AddLeftGroupbox('Tree')
+
     local tmp = function(aa, name)
         local arr = {}
         for _,v in next, aa:GetChildren() do 
@@ -546,6 +622,131 @@ do
         end 
         return arr
     end
+
+
+    leftTreeAutoBuyGroup:AddDropdown('Tree', {
+        Values = tmp(game:GetService("Workspace").TreeUpgrades.SurfaceGui.UpgradesList, "UpgradeName"),
+        Default = 0,
+        Multi = true,
+
+        Text = 'Upgrade Tree Upgrades',
+        Tooltip = 'Automatically upgrade the tree for you.',
+        Callback = function(value)
+            local ind = 0 
+            for _,v in next, Options.Tree.Value do 
+                ind += 1 
+            end
+            while Options.Tree.Value == value and ind > 0 do 
+                task.wait()
+
+                for _,v in next, Options.Tree.Value do 
+                    local ind 
+                    for _2,v2 in next, game:GetService("Workspace").TreeUpgrades.SurfaceGui.UpgradesList:GetChildren() do 
+                        if v2:FindFirstChild("UpgradeName") and v2.UpgradeName.Text == _ then 
+                            ind = tonumber(string.split(v2.Name, "Upgrade")[2])
+                            break 
+                        end
+                    end 
+                    
+                    events.TreeUpgrade:FireServer(ind)
+                    wait(.4)
+                end 
+            end
+        end
+    })
+
+    leftTreeAutoBuyGroup:AddDropdown('MoreTreeUpgrades', {
+        Values = tmp(game:GetService("Players").ProtonDev_Sys.PlayerGui.GameGui.TreeUpgrades.Content.List1, "UpgradeName"),
+        Default = 0,
+        Multi = true,
+
+        Text = 'Upgrade More Tree Upgrades',
+        Tooltip = 'Automatically upgrade the tree for you.',
+        Callback = function(value)
+            local ind = 0 
+            for _,v in next, Options.MoreTreeUpgrades.Value do 
+                ind += 1 
+            end
+            while Options.MoreTreeUpgrades.Value == value and ind > 0 do 
+                task.wait()
+
+                for _,v in next, Options.MoreTreeUpgrades.Value do 
+                    local ind 
+                    for _2,v2 in next, game:GetService("Players").ProtonDev_Sys.PlayerGui.GameGui.TreeUpgrades.Content.List1:GetChildren() do 
+                        if v2:FindFirstChild("UpgradeName") and v2.UpgradeName.Text == _ then 
+                            ind = tonumber(string.split(v2.Name, "Upgrade")[2])
+                            break 
+                        end
+                    end 
+                    
+                    events.MoreTreeUpgrade:FireServer(ind)
+                    wait(.4)
+                end 
+            end
+        end
+    })
+
+    leftTreeAutoBuyGroup:AddDropdown('GoldTree', {
+        Values = tmp(game:GetService("Workspace").GoldUpgrades.TreeUpgrades.SurfaceGui.UpgradesList, "UpgradeName"),
+        Default = 0,
+        Multi = true,
+
+        Text = 'Upgrade Gold Tree Upgrades',
+        Tooltip = 'Automatically upgrade the gold tree for you.',
+        Callback = function(value)
+            local ind = 0 
+            for _,v in next, Options.GoldTree.Value do 
+                ind += 1 
+            end
+            while Options.GoldTree.Value == value and ind > 0 do 
+                task.wait()
+
+                for _,v in next, Options.GoldTree.Value do 
+                    local ind 
+                    for _2,v2 in next, game:GetService("Workspace").GoldUpgrades.TreeUpgrades.SurfaceGui.UpgradesList:GetChildren() do 
+                        if v2:FindFirstChild("UpgradeName") and v2.UpgradeName.Text == _ then 
+                            ind = tonumber(string.split(v2.Name, "Upgrade")[2])
+                            break 
+                        end
+                    end 
+                    
+                    events.MoreTreeUpgrade:FireServer(ind)
+                    wait(.4)
+                end 
+            end
+        end
+    })
+
+    leftTreeAutoBuyGroup:AddDropdown('TreePrestigeUpgrades', {
+        Values = tmp(game:GetService("Workspace").TreePrestige.TreeUpgrades.SurfaceGui.UpgradesList, "UpgradeName"),
+        Default = 0,
+        Multi = true,
+
+        Text = 'Upgrade Prestige Tree Upgrades',
+        Tooltip = 'Automatically upgrade the tree for you.',
+        Callback = function(value)
+            local ind = 0 
+            for _,v in next, Options.TreePrestigeUpgrades.Value do 
+                ind += 1 
+            end
+            while Options.TreePrestigeUpgrades.Value == value and ind > 0 do 
+                task.wait()
+
+                for _,v in next, Options.TreePrestigeUpgrades.Value do 
+                    local ind 
+                    for _2,v2 in next, game:GetService("Workspace").TreePrestige.TreeUpgrades.SurfaceGui.UpgradesList:GetChildren() do 
+                        if v2:FindFirstChild("UpgradeName") and v2.UpgradeName.Text == _ then 
+                            ind = tonumber(string.split(v2.Name, "Upgrade")[2])
+                            break 
+                        end
+                    end 
+                    
+                    events.PrestigeTreeUpgrade:FireServer(ind)
+                    wait(.4)
+                end 
+            end
+        end
+    })
 
     leftAutoBuyGroup:AddDropdown('Factory', {
         Values = tmp(game.Players.LocalPlayer.PlayerGui.GameGui.UpgradesFrame.Content.FactoryUpgrades.List, "UpgradeName"),
@@ -761,7 +962,7 @@ local WatermarkConnection = game:GetService('RunService').RenderStepped:Connect(
     ));
 end);
 
-Library.KeybindFrame.Visible = true; 
+Library.KeybindFrame.Visible = false; 
 
 Library:OnUnload(function()
     WatermarkConnection:Disconnect()
