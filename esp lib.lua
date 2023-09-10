@@ -21,11 +21,9 @@ function esp:removeBox(player)
         error("PLAYER DOES NOT HAVE AN ESP BOX")
     end
     esp.Boxes[player.UserId][5]:Disconnect()
-    for _,line in next, esp.Boxes[player.UserId] do
-        if type(line) ~= 'table' then
-            line.Visible = false
-            line:Remove()
-        end
+    for i = 1, 4, 1 do
+        line[i].Visible = false 
+        line[i]:Remove()
     end
     esp.Boxes[player.UserId] = nil
 end
