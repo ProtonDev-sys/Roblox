@@ -18,7 +18,10 @@ function esp:createBoxDrawing()
 end
 
 function esp:removeBox(player)
-
+    for _,line in next, esp.Boxes[player.UserId] do
+        line.Remove()
+    end
+    esp.Boxes[player.UserId] = nil
 end
 
 function esp:Box(player, part, colour)
