@@ -19,7 +19,7 @@ end
 function esp:removeBox(player)
     for _,line in next, esp.Boxes[player.UserId] do
         line.Visible = false
-        line.Remove()
+        --line.Remove()
     end
     --esp.Boxes[player.UserId] = nil
 end
