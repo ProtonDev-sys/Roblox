@@ -17,9 +17,12 @@ function esp:createBoxDrawing()
 end
 
 function esp:removeBox(player)
+    if not esp:boxExists(player) then
+        error("PLAYER DOES NOT HAVE AN ESP BOX")
+    end
     for _,line in next, esp.Boxes[player.UserId] do
+        line.Visible = false
         line:Remove()
-        warn("REMOVED")
     end
     esp.Boxes[player.UserId] = nil
 end
