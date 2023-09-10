@@ -19,6 +19,7 @@ end
 function esp:removeBox(player)
     for _,line in next, esp.Boxes[player.UserId] do
         line:Remove()
+        warn("REMOVED")
     end
     esp.Boxes[player.UserId] = nil
 end
