@@ -68,17 +68,12 @@ function esp:Box(player, part, colour)
 end
 
 function esp:createBox(player, part, colour)
-    warn(player)
     esp:Box(player, part, colour)
     local id = player.UserId
     local connection
     connection = RunService.RenderStepped:Connect(function()
         if esp:Box(player, part) then
-            warn("delete")
-            for _,line in next, esp.Boxes[id] do
-                line.Remove()
-            end
-            esp.Boxes[id] = nil
+            esp:removeBox(player)
             connection:Disconnect()
         end
     end)
@@ -86,7 +81,6 @@ end
 
 function esp:changeBoxColour(player, colour)
     if esp.Boxes[player.UserId] then
-        warn(colour)
         for _,line in next, esp.Boxes[player.UserId] do
             line.Color = colour
         end
