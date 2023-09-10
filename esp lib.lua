@@ -22,8 +22,8 @@ function esp:removeBox(player)
     end
     esp.Boxes[player.UserId][5]:Disconnect()
     for i = 1, 4, 1 do
-        line[i].Visible = false 
-        line[i]:Remove()
+        esp.Boxes[player.UserId][i].Visible = false 
+        esp.Boxes[player.UserId][i]:Remove()
     end
     esp.Boxes[player.UserId] = nil
 end
