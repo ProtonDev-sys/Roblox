@@ -1,5 +1,4 @@
 local esp = {}
-
 esp.Boxes = {}
 
 local Players = game:GetService("Players")
@@ -19,9 +18,10 @@ end
 
 function esp:removeBox(player)
     for _,line in next, esp.Boxes[player.UserId] do
+        line.Visible = false
         line.Remove()
     end
-    esp.Boxes[player.UserId] = nil
+    --esp.Boxes[player.UserId] = nil
 end
 
 function esp:Box(player, part, colour)
