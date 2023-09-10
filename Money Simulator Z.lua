@@ -31,6 +31,14 @@ local Tabs = {
 }
 
 
+for _,lockedItem in next, game:GetService("ReplicatedStorage").LockedStuff:GetChildren() do
+    lockedItem.Parent = workspace
+end
+for _,v in next, workspace:GetChildren() do
+    if string.match(v.Name, "Lock") then
+        v:Destroy()
+    end
+end
 local FactoryLeftBox = Tabs.Factory:AddLeftGroupbox('Clicking')
 local FactoryRightBox = Tabs.Factory:AddRightGroupbox('Factory Upgrades')
 local TreeLeftBox = Tabs.Factory:AddRightGroupbox('Tree')
@@ -43,7 +51,7 @@ FactoryLeftBox:AddToggle('BoostMachines', {
     Callback = function(Value)
         while Toggles.BoostMachines.Value do 
             wait() 
-            fireclickdetector(workspace.MachineBoost["MachineBoost1"].ClickDetector)
+            fireclickdetector(workspace:WaitForChild("MachineBoost")["MachineBoost1"].ClickDetector)
         end
     end
 })
@@ -151,11 +159,33 @@ local function shouldPrestigeTree()
         unabbreviatedGain = number * 1000000000
     elseif suffix == "T" then
         unabbreviatedGain = number * 1000000000000
+    else
+        unabbreviatedGain = number
     end
-
-    if unabbreviatedGain and (unabbreviatedGain/player.Stats.TreePrestigePoints.Value) * 100 > getgenv().PrestigeTreePercentage then
+    if unabbreviatedGain and getgenv().PrestigeTreePercentage and (unabbreviatedGain/player.Stats.TreePrestigePoints.Value) * 100 > getgenv().PrestigeTreePercentage then
         return true
-    else 
+    else
+        return false
+    end
+end
+
+function shouldRebirthTree()
+    local gain = string.gsub(string.gsub(game:GetService("Workspace").TreeRebirth.RebirthBoard.SurfaceGui.About.PrestigeFrame.PowderGain.Text, "+", ""), ",", "")
+    local unabbreviatedGain = 0
+    local suffix = string.sub(gain, -1)
+    local number = tonumber(string.sub(gain, 1, -2))
+    if suffix == "M" then
+        unabbreviatedGain = number * 1000000
+    elseif suffix == "B" then
+        unabbreviatedGain = number * 1000000000
+    elseif suffix == "T" then
+        unabbreviatedGain = number * 1000000000000
+    else
+        unabbreviatedGain = number
+    end
+    if unabbreviatedGain and getgenv().RebirthTreePercentage and (unabbreviatedGain/player.Stats.TreeRebirthPoints.Value) * 100 > getgenv().RebirthTreePercentage then
+        return true
+    else
         return false
     end
 end
@@ -179,7 +209,7 @@ prioritySlider = TreeLeftBox:AddSlider('PrestigeTreePercentage', {
     Text = 'Percentage to prestige tree',
     Default = 50,
     Min = 0,
-    Max = 500,
+    Max = 1000,
     Rounding = 0,
     Compact = false,
     HideMax = true, 
@@ -188,6 +218,36 @@ prioritySlider = TreeLeftBox:AddSlider('PrestigeTreePercentage', {
         getgenv().PrestigeTreePercentage = value
     end
 })
+
+TreeLeftBox:AddToggle('RebirthTree', {
+    Text = 'Auto Rebirth Tree',
+    Default = false, 
+    Tooltip = 'Automatically rebirth the tree for you.',
+
+    Callback = function(Value)
+        while Toggles.RebirthTree.Value do
+            wait() 
+            if shouldRebirthTree() then
+                events.TreeRebirth:FireServer()
+            end
+        end
+    end
+})
+
+prioritySlider = TreeLeftBox:AddSlider('RebirthTreePercentage', {
+    Text = 'Percentage to rebirth tree',
+    Default = 50,
+    Min = 0,
+    Max = 1000,
+    Rounding = 0,
+    Compact = false,
+    HideMax = true, 
+
+    Callback = function(value)
+        getgenv().RebirthTreePercentage = value
+    end
+})
+
 
 FactoryLeftBox:AddToggle("PrestigeUpgrades", {
     Text = "Purchase Prestige Upgrades",
@@ -275,7 +335,9 @@ FactoryRightBox:AddToggle("BuyMachines", {
             wait() 
             for i = 1 , 5 , 1 do 
                 if player.Stats["FactoryUpgrade"..tostring(i)].Value < factoryUpgradeLimits[i] then
-                    events.FactoryUpgrade:FireServer(i,true)
+                    events.BuyMachine:FireServer(i,true)
+                    events.BuyMoreMachines:FireServer(i,2,true)
+                    
                     wait(.5)
                 end
             end
@@ -292,10 +354,12 @@ function getNextOre()
     local ores = {}
 
     for _, ore in next, workspace.Ores:GetChildren() do
-        local oreName = ore:FindFirstChild("OreName")
-        if oreName and not getgenv().miningBlacklist[oreName.Value] then
-            local priority = getgenv().miningPriority[oreName.Value] or 0
-            table.insert(ores, {ore = ore, priority = priority})
+        if tonumber(ore.Name) ~= 0 then
+            local oreName = ore:FindFirstChild("OreName")
+            if oreName and not getgenv().miningBlacklist[oreName.Value] then
+                local priority = getgenv().miningPriority[oreName.Value] or 0
+                table.insert(ores, {ore = ore, priority = priority})
+            end
         end
     end
 
@@ -694,9 +758,9 @@ do
             end
         end
     })
-
+    
     leftTreeAutoBuyGroup:AddDropdown('GoldTree', {
-        Values = tmp(game:GetService("Workspace").GoldUpgrades.TreeUpgrades.SurfaceGui.UpgradesList, "UpgradeName"),
+        Values = tmp(game:GetService("Workspace"):WaitForChild("GoldUpgrades").TreeUpgrades.SurfaceGui.UpgradesList, "UpgradeName"),
         Default = 0,
         Multi = true,
 
@@ -751,6 +815,37 @@ do
                     end 
                     
                     events.PrestigeTreeUpgrade:FireServer(ind)
+                    wait(.4)
+                end 
+            end
+        end
+    })
+
+    leftTreeAutoBuyGroup:AddDropdown('RootsUpgrades', {
+        Values = tmp(game:GetService("Workspace").TreeRebirthUpgrades.TreeUpgrades.SurfaceGui.UpgradesList, "UpgradeName"),
+        Default = 0,
+        Multi = true,
+
+        Text = 'Upgrade Tree Root Upgrades',
+        Tooltip = 'Automatically upgrade the tree roots for you.',
+        Callback = function(value)
+            local ind = 0 
+            for _,v in next, Options.RootsUpgrades.Value do 
+                ind += 1 
+            end
+            while Options.RootsUpgrades.Value == value and ind > 0 do 
+                task.wait()
+
+                for _,v in next, Options.RootsUpgrades.Value do 
+                    local ind 
+                    for _2,v2 in next, game:GetService("Workspace").TreeRebirthUpgrades.TreeUpgrades.SurfaceGui.UpgradesList:GetChildren() do 
+                        if v2:FindFirstChild("UpgradeName") and v2.UpgradeName.Text == _ then 
+                            ind = tonumber(string.split(v2.Name, "Upgrade")[2])
+                            break 
+                        end
+                    end 
+                    
+                    events.RebirthTreeUpgrade:FireServer(ind)
                     wait(.4)
                 end 
             end
@@ -924,6 +1019,7 @@ do
             defs[v.Name] = v.CFrame
             v.CFrame = player.Character.HumanoidRootPart.CFrame
         end
+        wait()
         for _,v in next, workspace.SecretBucks:GetChildren() do 
             v.CFrame = defs[v.Name]
         end
@@ -952,21 +1048,25 @@ end
 
 Library:SetWatermarkVisibility(true)
 
-local FrameTimer = tick()
-local FrameCounter = 0;
-local FPS = 60;
+local frameHistory = table.create(60, 0)
+local index = 0
 
-local WatermarkConnection = game:GetService('RunService').RenderStepped:Connect(function()
-    FrameCounter += 1;
+local function ComputeAverage()
+	local average = 0
 
-    if (tick() - FrameTimer) >= 1 then
-        FPS = FrameCounter;
-        FrameTimer = tick();
-        FrameCounter = 0;
-    end;
+	for _, deltaTime in ipairs(frameHistory) do
+		average += deltaTime
+	end
+
+	return average / 60
+end
+
+local WatermarkConnection = game:GetService('RunService').RenderStepped:Connect(function(dt)
+    index = (index + 1) % 61
+    frameHistory[index] = dt
 
     Library:SetWatermark(('Protons Scripts | %s fps | %s ms'):format(
-        math.floor(FPS),
+        math.floor(1/ComputeAverage()),
         math.floor(game:GetService('Stats').Network.ServerStatsItem['Data Ping']:GetValue())
     ));
 end);
