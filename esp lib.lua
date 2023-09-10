@@ -20,6 +20,7 @@ function esp:removeBox(player)
     if not esp:boxExists(player) then
         error("PLAYER DOES NOT HAVE AN ESP BOX")
     end
+    esp.Boxes[player.UserId][5]:Disconnect()
     for _,line in next, esp.Boxes[player.UserId] do
         line.Visible = false
         line:Remove()
@@ -73,11 +74,10 @@ end
 function esp:createBox(player, part, colour)
     esp:Box(player, part, colour)
     local id = player.UserId
-    local connection
-    connection = RunService.RenderStepped:Connect(function()
+    esp.Boxes[id][5] = RunService.RenderStepped:Connect(function()
         if esp:Box(player, part) then
             esp:removeBox(player)
-            connection:Disconnect()
+            esp.Boxes[id][5]:Disconnect()
         end
     end)
 end
