@@ -84,8 +84,8 @@ end
 
 function esp:changeBoxColour(player, colour)
     if esp.Boxes[player.UserId] then
-        for _,line in next, esp.Boxes[player.UserId] do
-            line.Color = colour
+        for i = 1, 4, 1 do
+            esp.Boxes[player.UserId][i].Color = colour 
         end
     else 
         error("ESP BOX DOESN'T EXIST")
