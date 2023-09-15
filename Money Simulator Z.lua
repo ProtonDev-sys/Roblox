@@ -416,12 +416,6 @@ do
             end
         end
         if ignoreStone then
-            table.sort(ores, function(a,b)    
-                return oreList[a.Name] > oreList[b.Name]
-            end)
-            if #ores == 0 then
-                warn(":(")
-            end
             return ores
         end
         return {ore}
@@ -434,8 +428,12 @@ do
         local found = false
         for _,v in next, ores do
             found = true
+            table.sort(ores, function(a,b)    
+                return oreList[a.Name] > oreList[b.Name]
+            end)
             break
         end
+        
         if not found and not rec then
             ores = getAllAttackableOres(not bool)
             return getNextMiningOre(bool, true)
