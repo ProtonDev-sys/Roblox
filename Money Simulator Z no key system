@@ -1,3 +1,6 @@
+if getgenv().useKeySystem then
+	loadstring(game:HttpGet("https://raw.githubusercontent.com/ProtonDev-sys/Roblox/main/linkvertise.lua"))()
+end
 local repo = 'https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/'
 
 local Library = loadstring(game:HttpGet(repo .. 'Library.lua'))()
