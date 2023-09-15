@@ -394,22 +394,27 @@ do
     local oreList, stringOreList, totalOres = getOreList()
     
 
-    local function getAllAttackableOres(ignoreStone)
+    local function getDepth()
+        return math.abs(player.Character.HumanoidRootPart.Position.Y % 6)
+    end
+
+    local function getAllAttackableOres(ignoreStone, range)
         if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then
             return
         end
         local ores = {}
         local ore = nil
-        local distance = 10
+        local distance = range and range or (18 + player.Stats.MiningUpgrade4.Value * 6)
+        local topY = -math.huge
         for _,v in next, workspace.MineChunks:GetChildren() do 
             for _,v in next, v:GetChildren() do
-                if v:IsA("BasePart") and v.Name ~= "Bedrock" then
+                if v:IsA("BasePart") and v.Name ~= "Bedrock" and v:FindFirstChild("Health") and v.Health.Value > 0 then
                     if not ignoreStone then
                         local _dist = (v.Position - player.Character.HumanoidRootPart.Position).Magnitude
-                        if _dist < distance then
-                            distance = _dist
+                        local y = v.Position.Y
+                        if _dist <= distance and y > topY then
                             ore = v
-                            return {ore}
+                            topY = y
                         end
                     elseif oreList[v.Name] then
                         table.insert(ores, v)
@@ -418,8 +423,12 @@ do
             end
         end
         if ignoreStone then
+            if #ores == 0 then
+                return getAllAttackableOres(false, math.huge)
+            end
             return ores
         end
+        warn(ore)
         return {ore}
     end
 
@@ -443,6 +452,8 @@ do
         return ores[1]
     end
 
+    local highlight = Instance.new("Highlight")
+    highlight.FillColor = Color3.new(0,255,0)
     QuarryLeftBox:AddToggle('AutoMineQuarry', {
         Text = 'Auto Mine Quarry',
         Default = false,
@@ -453,26 +464,36 @@ do
                 task.wait()
                 local ore = getNextMiningOre()
                 if ore then
-                    local highlight = Instance.new("Highlight")
-                    highlight.FillColor = Color3.new(0,255,0)
-                    highlight.Parent = ore
                     highlight.Enabled = true
+                    highlight.Parent = ore
                     task.spawn(function()
                         repeat
                             getgenv().isMiningQuarry = true
                             player.Character.HumanoidRootPart.CFrame = ore.CFrame
                             task.wait()
-                        until not ore.Parent or not Toggles.AutoMineQuarry.Value
+                        until not ore or not ore.Parent or not Toggles.AutoMineQuarry.Value
                     end)
-                    repeat
-                        game:GetService("ReplicatedStorage").Events.Mine:FireServer(ore)
-                        wait()
-                    until not ore.Parent or not Toggles.AutoMineQuarry.Value
-                    table.remove(ores, table.find(ores, ore))
-                    highlight:Destroy()
-                    getgenv().isMiningQuarry = false
-                    if not Toggles.AutoMineQuarry.Value then
-                        break
+                    if ore:FindFirstChild("Health") then
+                        local health = ore.Health.Value
+                        local t = tick()
+                        repeat
+                            game:GetService("ReplicatedStorage").Events.Mine:FireServer(ore)
+                            if ore:FindFirstChild("Health") then
+                                if ore.Health.Value ~= health then
+                                    health = ore.Health.Value
+                                elseif tick() - t > 1 then
+                                    break
+                                end
+                            end
+                            wait()
+                        until not ore.Parent or not Toggles.AutoMineQuarry.Value
+                        table.remove(ores, table.find(ores, ore))
+                        highlight.Parent = game:GetService("CoreGui")
+                        highlight.Enabled = false
+                        getgenv().isMiningQuarry = false
+                        if not Toggles.AutoMineQuarry.Value then
+                            break
+                        end
                     end
                 end
             end
@@ -513,7 +534,7 @@ do
     })
 
 
-
+   
     QuarryLeftBox:AddToggle('AutoMineQuarryLegit', {
         Text = 'Mine Aura Quarry',
         Default = false,
@@ -524,19 +545,20 @@ do
                 repeat task.wait() until not getgenv().isMiningQuarry
                 task.wait()
                 local ore = getNextMiningOre(true)
-                if ore and (ore.Position - player.Character.HumanoidRootPart.Position).Magnitude < 10 and not getgenv().isMiningQuarry then
-                    local highlight = Instance.new("Highlight")
-                    highlight.FillColor = Color3.new(0,255,0)
-                    highlight.Parent = ore
-                    highlight.Enabled = true
-                    repeat
-                        game:GetService("ReplicatedStorage").Events.Mine:FireServer(ore)
-                        wait()
-                    until not ore.Parent or not Toggles.AutoMineQuarryLegit.Value or getgenv().isMiningQuarry
-                    table.remove(ores, table.find(ores, ore))
-                    highlight:Destroy()
-                    if not Toggles.AutoMineQuarryLegit.Value then
-                        break
+                if not Toggles.AutoMineQuarry.Value then
+                    if ore and (ore.Position - player.Character.HumanoidRootPart.Position).Magnitude <= (18 + player.Stats.MiningUpgrade4.Value * 6) and not getgenv().isMiningQuarry then
+                        highlight.Parent = ore
+                        highlight.Enabled = true
+                        repeat
+                            game:GetService("ReplicatedStorage").Events.Mine:FireServer(ore)
+                            wait()
+                        until not ore or not ore.Parent or not Toggles.AutoMineQuarryLegit.Value or getgenv().isMiningQuarry or not ((ore.Position - player.Character.HumanoidRootPart.Position).Magnitude < 10 )
+                        table.remove(ores, table.find(ores, ore))
+                        highlight.Parent = game:GetService("CoreGui")
+                        highlight.Enabled = false
+                        if not Toggles.AutoMineQuarryLegit.Value then
+                            break
+                        end
                     end
                 end
             end
