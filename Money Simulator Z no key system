@@ -96,7 +96,7 @@ local function formatGrid()
     for _,v in next, gridValue:split(":") do 
         table.insert(grid, v)
     end
-	return grid
+    return grid
 end
 
 FactoryLeftBox:AddToggle('MergeGems', {
@@ -112,7 +112,7 @@ FactoryLeftBox:AddToggle('MergeGems', {
                 for j = i + 1, #grid do
                     if i ~= j and grid[i] == grid[j] then
                         events.GemGrid:FireServer(i, j)
-						wait(.1)
+                        wait(.1)
                         break
                     end
                 end
@@ -142,9 +142,11 @@ TreeLeftBox:AddToggle('CollectTree', {
     Callback = function(Value)
         while Toggles.CollectTree.Value do 
             wait() 
-            for _,v in next, game:GetService("Workspace").Factory.TreeObjects:GetChildren() do 
-                v.CanCollide = false
-                v.CFrame = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
+            if player.Character and player.Character.PrimaryPart then
+                for _,v in next, game:GetService("Workspace").Factory.TreeObjects:GetChildren() do 
+                    v.CanCollide = false
+                    v.CFrame = player.Character.HumanoidRootPart.CFrame
+                end
             end
         end
     end
@@ -290,7 +292,7 @@ local factoryUpgradeLimits = {
     [2] = 18,
     [3] = math.huge,
     [4] = 9,
-	[5] = 20,
+    [5] = 20,
 }
 
 
@@ -350,7 +352,200 @@ FactoryRightBox:AddToggle("BuyMachines", {
 
 
 local MiningLeftBox = Tabs.Mining:AddLeftGroupbox('Mining')
+local QuarryLeftBox = Tabs.Mining:AddLeftGroupbox('Quarry')
+
 local MiningRightBox = Tabs.Mining:AddRightGroupbox('Crafting')
+
+do
+
+    local function getOreList()
+        local stringOreList = {}
+        
+        local oreList = {}
+        local sortedOres = {}
+
+        for _,ore in next, ReplicatedStorage.OresPrices:GetChildren() do
+            oreList[ore.Name] = ore.Value
+            table.insert(stringOreList, ore.Name)
+        end
+
+        for oreName, _ in pairs(oreList) do
+            table.insert(sortedOres, oreName)
+        end
+
+        table.sort(sortedOres, function(a, b)
+            return oreList[a] < oreList[b]
+        end)
+
+        local priorityOres = {}
+        for i, oreName in ipairs(sortedOres) do
+            priorityOres[oreName] = i
+        end
+        
+        local priorityOresStrings = {}
+        local amount = 0
+        for _, oreName in ipairs(sortedOres) do
+            table.insert(priorityOresStrings, oreName)
+            amount += 1
+        end
+
+        return priorityOres, priorityOresStrings, amount
+    end
+    local oreList, stringOreList, totalOres = getOreList()
+    
+
+    local function getAllAttackableOres(ignoreStone)
+        if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then
+            return
+        end
+        local ores = {}
+        local ore = nil
+        local distance = 10
+        for _,v in next, workspace.MineChunks:GetChildren() do 
+            for _,v in next, v:GetChildren() do
+                if v:IsA("BasePart") and v.Name ~= "Bedrock" then
+                    if not ignoreStone then
+                        local _dist = (v.Position - player.Character.HumanoidRootPart.Position).Magnitude
+                        if _dist < distance then
+                            distance = _dist
+                            ore = v
+                            return {ore}
+                        end
+                    elseif oreList[v.Name] then
+                        table.insert(ores, v)
+                    end
+                end
+            end
+        end
+        if ignoreStone then
+            table.sort(ores, function(a,b)    
+                return oreList[a.Name] > oreList[b.Name]
+            end)
+            if #ores == 0 then
+                warn(":(")
+            end
+            return ores
+        end
+        return {ore}
+    end
+
+
+
+    local ores = {}
+    local function getNextMiningOre(bool, rec)
+        local found = false
+        for _,v in next, ores do
+            found = true
+            break
+        end
+        if not found and not rec then
+            ores = getAllAttackableOres(not bool)
+            return getNextMiningOre(bool, true)
+        end
+        return ores[1]
+    end
+
+    QuarryLeftBox:AddToggle('AutoMineQuarry', {
+        Text = 'Auto Mine Quarry',
+        Default = false,
+        Tooltip = 'Automatically mines quarry for you.',
+
+        Callback = function(Value)
+            while Toggles.AutoMineQuarry.Value do
+                task.wait()
+                local ore = getNextMiningOre()
+                if ore then
+                    local highlight = Instance.new("Highlight")
+                    highlight.FillColor = Color3.new(0,255,0)
+                    highlight.Parent = ore
+                    highlight.Enabled = true
+                    task.spawn(function()
+                        repeat
+                            getgenv().isMiningQuarry = true
+                            player.Character.HumanoidRootPart.CFrame = ore.CFrame
+                            task.wait()
+                        until not ore.Parent or not Toggles.AutoMineQuarry.Value
+                    end)
+                    repeat
+                        game:GetService("ReplicatedStorage").Events.Mine:FireServer(ore)
+                        wait()
+                    until not ore.Parent or not Toggles.AutoMineQuarry.Value
+                    table.remove(ores, table.find(ores, ore))
+                    highlight:Destroy()
+                    getgenv().isMiningQuarry = false
+                    if not Toggles.AutoMineQuarry.Value then
+                        break
+                    end
+                end
+            end
+        end
+    })
+
+    local prioritySlider
+    QuarryLeftBox:AddDropdown('MiningQuarryDropdown', {
+        Values = stringOreList,
+        Default = 0,
+        Multi = false,
+
+        Text = 'Ore Priority',
+        Tooltip = 'Allows you to change the priority of attacking ores.',
+        Callback = function(value)
+            getgenv().selectedQuarryOre = value
+            local priority = oreList[value] or 0
+            prioritySlider:SetValue(priority)
+        end
+    })
+
+    prioritySlider = QuarryLeftBox:AddSlider('MiningPriority', {
+        Text = 'Priority',
+        Default = 0,
+        Min = 0,
+        Max = totalOres,
+        Rounding = 0,
+        Compact = false,
+        HideMax = true, 
+
+        Callback = function(value)
+            if not getgenv().selectedQuarryOre and value > 0 then
+                prioritySlider:SetValue(0)
+            else
+                oreList[getgenv().selectedQuarryOre] = value
+            end 
+        end
+    })
+
+
+
+    QuarryLeftBox:AddToggle('AutoMineQuarryLegit', {
+        Text = 'Mine Aura Quarry',
+        Default = false,
+        Tooltip = 'Automatically mines quarry for you.',
+
+        Callback = function(Value)
+            while Toggles.AutoMineQuarryLegit.Value do
+                repeat task.wait() until not getgenv().isMiningQuarry
+                task.wait()
+                local ore = getNextMiningOre(true)
+                if ore and (ore.Position - player.Character.HumanoidRootPart.Position).Magnitude < 10 and not getgenv().isMiningQuarry then
+                    local highlight = Instance.new("Highlight")
+                    highlight.FillColor = Color3.new(0,255,0)
+                    highlight.Parent = ore
+                    highlight.Enabled = true
+                    repeat
+                        game:GetService("ReplicatedStorage").Events.Mine:FireServer(ore)
+                        wait()
+                    until not ore.Parent or not Toggles.AutoMineQuarryLegit.Value or getgenv().isMiningQuarry
+                    table.remove(ores, table.find(ores, ore))
+                    highlight:Destroy()
+                    if not Toggles.AutoMineQuarryLegit.Value then
+                        break
+                    end
+                end
+            end
+        end
+    })
+end
+
 
 function getNextOre()
     local ores = {}
@@ -365,16 +560,15 @@ function getNextOre()
         end
     end
 
-	
     table.sort(ores, function(a, b)
         return a.priority > b.priority
     end)
 
-	if ores[1] then 
-    	return ores[1].ore
-	else
-		return false
-	end
+    if ores[1] then 
+        return ores[1].ore
+    else
+        return false
+    end
 end
 
 
@@ -402,6 +596,8 @@ MiningLeftBox:AddToggle('AutoMine', {
         end
     end
 })
+
+
 
 do 
     getgenv().miningBlacklist = {}
@@ -522,6 +718,16 @@ do
     game.Players.LocalPlayer.Stats.Mine.Changed:Connect(function()
         MiningDropdown:SetValues(tree[game.Players.LocalPlayer.Stats.Mine.Value])
     end)
+
+    MiningLeftBox:AddButton('Break Mining Animation', function()
+        events.EnterMine:FireServer(1)
+        repeat task.wait() until getNextOre()
+        local ore = getNextOre()
+        events.MineOre:FireServer(tonumber(ore.Name))
+        wait()
+        player.Character:BreakJoints()
+        events.EnterMine:FireServer(0)
+    end)
 end
 
 local function getCraftRequirements(itemName, amount)
@@ -579,29 +785,29 @@ local function getCraftingOrderAndAmount(itemName, amount)
 end
 
 function getAmount(name)
-	if game.Players.LocalPlayer.Stats:FindFirstChild(name) then
-		return game.Players.LocalPlayer.Stats:FindFirstChild(name).Value 
-	else 
-		local craftInventory = game.Players.LocalPlayer.Stats.CraftInventory.Value
-		for _,v in next, craftInventory:split(":") do
-			local split = v:split(">")
-			local n,am = split[1], split[2]
-			if n == name then 
-				return tonumber(am)
-			end
-		end
-	end
-	return 0
+    if game.Players.LocalPlayer.Stats:FindFirstChild(name) then
+        return game.Players.LocalPlayer.Stats:FindFirstChild(name).Value 
+    else 
+        local craftInventory = game.Players.LocalPlayer.Stats.CraftInventory.Value
+        for _,v in next, craftInventory:split(":") do
+            local split = v:split(">")
+            local n,am = split[1], split[2]
+            if n == name then 
+                return tonumber(am)
+            end
+        end
+    end
+    return 0
 end
 
 local function craft(itemName, amount)
-	local pos = player.PlayerGui.GameGui.CraftFrame.Content.CraftList.CraftList:FindFirstChild(itemName).Position
-	local itemIndex = math.floor(pos.X.Scale / 0.333) + (math.floor(pos.Y.Scale / 0.1) * 3) + 1
-	local ownedAmount = getAmount(itemName)
-	amount = math.max(amount-ownedAmount, 0)
-	if amount > 0 then
-		game:GetService("ReplicatedStorage").Events.Craft:FireServer(itemIndex, amount)
-	end
+    local pos = player.PlayerGui.GameGui.CraftFrame.Content.CraftList.CraftList:FindFirstChild(itemName).Position
+    local itemIndex = math.floor(pos.X.Scale / 0.333) + (math.floor(pos.Y.Scale / 0.1) * 3) + 1
+    local ownedAmount = getAmount(itemName)
+    amount = math.max(amount-ownedAmount, 0)
+    if amount > 0 then
+        game:GetService("ReplicatedStorage").Events.Craft:FireServer(itemIndex, amount)
+    end
 end
 
 function getOrderedCraftingItems()
@@ -679,13 +885,15 @@ do
 
     box:AddButton('Exit Mine', function()
         game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(704.513245, 7.64234734, 134.697647, 0.955939233, -4.1481659e-08, 0.293564647, 4.18234904e-08, 1, 5.11283016e-09, -0.293564647, 7.390343e-09, 0.955939233)
-        ReplicatedStorage.Events.EnterMine:FireServer(0)
+        events.EnterMine:FireServer(0)
     end)
 end
 
 do 
     local leftAutoBuyGroup = Tabs["Auto Buy"]:AddLeftGroupbox('Factory')
     local rightAutoBuyGroup = Tabs["Auto Buy"]:AddRightGroupbox('Mine')
+    local rightQuarryAutoBuyGroup = Tabs["Auto Buy"]:AddRightGroupbox('Quarry')
+    
     local leftTreeAutoBuyGroup = Tabs["Auto Buy"]:AddLeftGroupbox('Tree')
 
     local tmp = function(aa, name)
@@ -724,7 +932,7 @@ do
                     end 
                     
                     events.TreeUpgrade:FireServer(ind)
-                    wait(.4)
+                    wait(.1)
                 end 
             end
         end
@@ -1009,6 +1217,68 @@ do
         end
     })
 
+    rightQuarryAutoBuyGroup:AddDropdown('OreUpgradesII', {
+        Values = tmp(player.PlayerGui.GameGui.OresUpgrades2.Content.List1, "UpgradeName"),
+        Default = 0,
+        Multi = true,
+
+        Text = 'Ore Upgrades II',
+        Tooltip = 'Automatically upgrade the ore upgrades II upgrades for you.',
+        Callback = function(value)
+            local ind = 0 
+            for _,v in next, Options.OreUpgradesII.Value do 
+                ind += 1 
+            end
+            while Options.OreUpgradesII.Value == value and ind > 0 do 
+                task.wait()
+
+                for _,v in next, Options.OreUpgradesII.Value do 
+                    local ind 
+                    for _2,v2 in next, player.PlayerGui.GameGui.OresUpgrades2.Content.List1:GetChildren() do 
+                        if v2:FindFirstChild("UpgradeName") and v2.UpgradeName.Text == _ then 
+                            ind = tonumber(string.split(v2.Name, "Upgrade")[2])
+                            break 
+                        end
+                    end 
+                    warn(ind)
+                    events.OreUpgrade2:FireServer(ind, 1)
+                    wait(.4)
+                end 
+            end
+        end
+    })
+
+    rightQuarryAutoBuyGroup:AddDropdown('MiningUpgreades', {
+        Values = tmp(game:GetService("Players").LocalPlayer.PlayerGui.GameGui.MiningUpgrades.Content.List1, "UpgradeName"),
+        Default = 0,
+        Multi = true,
+
+        Text = 'Mining Upgrades',
+        Tooltip = 'Automatically upgrade the ore upgrades II upgrades for you.',
+        Callback = function(value)
+            local ind = 0 
+            for _,v in next, Options.MiningUpgreades.Value do 
+                ind += 1 
+            end
+            while Options.MiningUpgreades.Value == value and ind > 0 do 
+                task.wait()
+
+                for _,v in next, Options.MiningUpgreades.Value do 
+                    local ind 
+                    for _2,v2 in next, game:GetService("Players").LocalPlayer.PlayerGui.GameGui.MiningUpgrades.Content.List1:GetChildren() do 
+                        if v2:FindFirstChild("UpgradeName") and v2.UpgradeName.Text == _ then 
+                            ind = tonumber(string.split(v2.Name, "Upgrade")[2])
+                            break 
+                        end
+                    end 
+                    warn(ind)
+                    events.MiningUpgrades:FireServer(ind)
+                    wait(.4)
+                end 
+            end
+        end
+    })
+
 end
 
 do 
@@ -1054,13 +1324,13 @@ local frameHistory = table.create(60, 0)
 local index = 0
 
 local function ComputeAverage()
-	local average = 0
+    local average = 0
 
-	for _, deltaTime in ipairs(frameHistory) do
-		average += deltaTime
-	end
+    for _, deltaTime in ipairs(frameHistory) do
+        average += deltaTime
+    end
 
-	return average / 60
+    return average / 60
 end
 
 local WatermarkConnection = game:GetService('RunService').RenderStepped:Connect(function(dt)
