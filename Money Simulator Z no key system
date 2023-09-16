@@ -537,6 +537,14 @@ local function getAllAttackableOres(ignoreStone, range, enforceDepth)
                 return priorityA > priorityB
             end)
             return getNextMiningOre(bool, distance, true)
+        elseif not found and rec then
+            ores = getAllAttackableOres(bool, distance, false)
+            table.sort(ores, function(a,b)
+                local priorityA = oreList[a.Name] or 0
+                local priorityB = oreList[b.Name] or 0
+                return priorityA > priorityB
+            end)
+            return getNextMiningOre(bool, distance, true)
         end
         return ores[1]
     end
