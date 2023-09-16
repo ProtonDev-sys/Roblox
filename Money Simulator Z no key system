@@ -475,7 +475,6 @@ local function getAllAttackableOres(ignoreStone, range, enforceDepth)
 
 
     local function getAllAttackableOres(ignoreStone, range, enforceDepth)
-        warn(ignoreStone)
         if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then
             return
         end
@@ -508,9 +507,22 @@ local function getAllAttackableOres(ignoreStone, range, enforceDepth)
                 end
             end
         end
-    
-        -- If we're ignoring stone and found no attackable ores, change the parameters and try again
-        if ignoreStone and #attackableOres == 0 then
+        if ignoreStone and #attackableOres == 0 and range == math.huge and enforceDepth then
+            local lowestY = math.huge
+            local lowestOre = nil
+            for _, chunk in ipairs(workspace.MineChunks:GetChildren()) do 
+                for _, ore in ipairs(chunk:GetChildren()) do
+                    local orePosition = ore.Position
+                    local oreY = orePosition.Y
+                    if oreY < lowestY then
+                        lowestY = oreY
+                        lowestOre = ore
+                    end
+                end
+            end
+            return {lowestOre}
+            
+        elseif ignoreStone and #attackableOres == 0 then
             return getAllAttackableOres(false, math.huge, enforceDepth)
         end
     
@@ -522,29 +534,21 @@ local function getAllAttackableOres(ignoreStone, range, enforceDepth)
 
 
     local ores = {}
-    local function getNextMiningOre(bool, distance, rec)
+    local function getNextMiningOre(bool, distance)
         local found = false
         for _,v in next, ores do
             found = true
             break
         end
         warn(found)
-        if not found and not rec then
+        if not found  then
             ores = getAllAttackableOres(bool, distance, true)
             table.sort(ores, function(a,b)
                 local priorityA = oreList[a.Name] or 0
                 local priorityB = oreList[b.Name] or 0
                 return priorityA > priorityB
             end)
-            return getNextMiningOre(bool, distance, true)
-        elseif not found and rec then
-            ores = getAllAttackableOres(bool, distance, false)
-            table.sort(ores, function(a,b)
-                local priorityA = oreList[a.Name] or 0
-                local priorityB = oreList[b.Name] or 0
-                return priorityA > priorityB
-            end)
-            return getNextMiningOre(bool, distance, true)
+            return getNextMiningOre(bool, distance)
         end
         return ores[1]
     end
