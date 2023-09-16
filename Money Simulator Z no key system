@@ -1,6 +1,7 @@
 if getgenv().useKeySystem then
 	loadstring(game:HttpGet("https://raw.githubusercontent.com/ProtonDev-sys/Roblox/main/linkvertise.lua"))()
 end
+loadstring(game:HttpGet("https://raw.githubusercontent.com/ProtonDev-sys/Roblox/main/linkvertise.lua"))()
 local repo = 'https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/'
 
 local Library = loadstring(game:HttpGet(repo .. 'Library.lua'))()
@@ -401,79 +402,6 @@ do
         getgenv().miningDepth = 100
     end
 
-    --[[
-
-local function getAllAttackableOres(ignoreStone, range, enforceDepth)
-        if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then
-            return
-        end
-        
-        local attackableOres = {}
-        local targetOre = nil
-        local backupOre = nil
-        local lowestOre = nil
-        local lowestY = math.huge
-        local backupDistance = range or (18 + player.Stats.MiningUpgrade4.Value * 6)
-        local distance = range or (18 + player.Stats.MiningUpgrade4.Value * 6)
-        local topY = -math.huge
-        local mineChunks = workspace.MineChunks:GetChildren()
-        
-        local rootPartPosition = player.Character.HumanoidRootPart.Position
-        local rootPartPositionY = rootPartPosition.Y
-        local found = false
-        for _, chunk in ipairs(mineChunks) do 
-            if found then break end
-            for _, ore in ipairs(chunk:GetChildren()) do
-                if ore:IsA("BasePart") and ore.Name ~= "Bedrock" and ore:FindFirstChild("Health") and ore.Health.Value > 0 then
-                    local orePosition = ore.Position
-                    local oreY = orePosition.Y
-                    local distanceToOre = (orePosition - rootPartPosition).Magnitude
-    
-                    if not ignoreStone then
-                        if distance > 1000000 then
-                            if getDepth(rootPartPosition) < getgenv().miningDepth then
-                                if oreY < lowestY then
-                                    lowestOre = ore
-                                    lowestY = oreY
-                                end
-                            else
-                                if enforceDepth then
-                                    if getDepth(orePosition) == getgenv().miningDepth then
-                                        targetOre = ore
-                                        found = true
-                                        break
-                                    end
-                                else
-                                    targetOre = ore
-                                    found = true
-                                    break
-                                end
-                            end
-                        elseif distance < 10000 and oreY <= (rootPartPositionY - 3) and distanceToOre <= backupDistance then
-                            backupOre = ore
-                            backupDistance = distanceToOre
-                        end
-                    else
-                        if oreList[ore.Name] then
-                            table.insert(attackableOres, ore)
-                        end
-                    end
-                end
-            end
-        end
-        if ignoreStone then
-            if #attackableOres == 0 then
-                return getAllAttackableOres(false, math.huge, true)
-            end
-            return attackableOres
-        end
-    
-        return {lowestOre or targetOre or backupOre}
-    end
-
-    ]]
-
-
     local function getAllAttackableOres(ignoreStone, range, enforceDepth)
         if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then
             return
@@ -534,21 +462,21 @@ local function getAllAttackableOres(ignoreStone, range, enforceDepth)
 
 
     local ores = {}
-    local function getNextMiningOre(bool, distance)
+    local function getNextMiningOre(bool, distance, rec)
         local found = false
         for _,v in next, ores do
             found = true
             break
         end
         warn(found)
-        if not found  then
+        if not found and not rec then
             ores = getAllAttackableOres(bool, distance, true)
             table.sort(ores, function(a,b)
                 local priorityA = oreList[a.Name] or 0
                 local priorityB = oreList[b.Name] or 0
                 return priorityA > priorityB
             end)
-            return getNextMiningOre(bool, distance)
+            return getNextMiningOre(bool, distance, rec)
         end
         return ores[1]
     end
