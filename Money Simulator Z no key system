@@ -507,7 +507,7 @@ local function getAllAttackableOres(ignoreStone, range, enforceDepth)
                 end
             end
         end
-        if ignoreStone and #attackableOres == 0 and range == math.huge and enforceDepth then
+        if not ignoreStone and #attackableOres == 0 and range == math.huge and enforceDepth then
             local lowestY = math.huge
             local lowestOre = nil
             for _, chunk in ipairs(workspace.MineChunks:GetChildren()) do 
