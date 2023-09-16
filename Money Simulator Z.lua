@@ -603,7 +603,7 @@ do
         Text = 'Mining Depth',
         Default = 100,
         Min = 0,
-        Max = 7000,
+        Max = 1000,
         Rounding = 0,
         Compact = false,
         HideMax = true, 
