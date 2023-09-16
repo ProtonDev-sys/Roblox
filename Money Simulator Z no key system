@@ -401,7 +401,9 @@ do
         getgenv().miningDepth = 100
     end
 
-    local function getAllAttackableOres(ignoreStone, range)
+    --[[
+
+local function getAllAttackableOres(ignoreStone, range, enforceDepth)
         if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then
             return
         end
@@ -418,8 +420,9 @@ do
         
         local rootPartPosition = player.Character.HumanoidRootPart.Position
         local rootPartPositionY = rootPartPosition.Y
-        
+        local found = false
         for _, chunk in ipairs(mineChunks) do 
+            if found then break end
             for _, ore in ipairs(chunk:GetChildren()) do
                 if ore:IsA("BasePart") and ore.Name ~= "Bedrock" and ore:FindFirstChild("Health") and ore.Health.Value > 0 then
                     local orePosition = ore.Position
@@ -433,16 +436,22 @@ do
                                     lowestOre = ore
                                     lowestY = oreY
                                 end
-                            elseif getDepth(orePosition) >= getgenv().miningDepth and distanceToOre <= distance and oreY > topY then
-                                targetOre = ore
-                                topY = oreY
+                            else
+                                if enforceDepth then
+                                    if getDepth(orePosition) == getgenv().miningDepth then
+                                        targetOre = ore
+                                        found = true
+                                        break
+                                    end
+                                else
+                                    targetOre = ore
+                                    found = true
+                                    break
+                                end
                             end
                         elseif distance < 10000 and oreY <= (rootPartPositionY - 3) and distanceToOre <= backupDistance then
                             backupOre = ore
                             backupDistance = distanceToOre
-                        elseif distance >= 10000 and oreY < topY then
-                            backupOre = ore
-                            topY = oreY
                         end
                     else
                         if oreList[ore.Name] then
@@ -452,15 +461,60 @@ do
                 end
             end
         end
-    
         if ignoreStone then
             if #attackableOres == 0 then
-                return getAllAttackableOres(false, math.huge)
+                return getAllAttackableOres(false, math.huge, true)
             end
             return attackableOres
         end
     
         return {lowestOre or targetOre or backupOre}
+    end
+
+    ]]
+
+
+    local function getAllAttackableOres(ignoreStone, range, enforceDepth)
+        warn(ignoreStone)
+        if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then
+            return
+        end
+        
+        local attackableOres = {}
+        local distance = range or (18 + player.Stats.MiningUpgrade4.Value * 6)
+        local rootPartPosition = player.Character.HumanoidRootPart.Position
+    
+        for _, chunk in ipairs(workspace.MineChunks:GetChildren()) do 
+            for _, ore in ipairs(chunk:GetChildren()) do
+                if ore:IsA("BasePart") and ore.Name ~= "Bedrock" and ore:FindFirstChild("Health") and ore.Health.Value > 0 then
+                    local orePosition = ore.Position
+                    local distanceToOre = (orePosition - rootPartPosition).Magnitude
+    
+                    if ignoreStone then
+                        if oreList[ore.Name] then
+                            table.insert(attackableOres, ore)
+                        end
+                    else
+                        if distanceToOre <= distance then
+                            if enforceDepth then
+                                if getDepth(orePosition) == getgenv().miningDepth then
+                                    table.insert(attackableOres, ore)
+                                end
+                            else
+                                table.insert(attackableOres, ore)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    
+        -- If we're ignoring stone and found no attackable ores, change the parameters and try again
+        if ignoreStone and #attackableOres == 0 then
+            return getAllAttackableOres(false, math.huge, enforceDepth)
+        end
+    
+        return attackableOres
     end
     
     
@@ -468,19 +522,21 @@ do
 
 
     local ores = {}
-    local function getNextMiningOre(bool, rec)
+    local function getNextMiningOre(bool, distance, rec)
         local found = false
         for _,v in next, ores do
             found = true
-            table.sort(ores, function(a,b)    
-                return oreList[a.Name] > oreList[b.Name]
-            end)
             break
         end
-        
+        warn(found)
         if not found and not rec then
-            ores = getAllAttackableOres(not bool)
-            return getNextMiningOre(bool, true)
+            ores = getAllAttackableOres(bool, distance, true)
+            table.sort(ores, function(a,b)
+                local priorityA = oreList[a.Name] or 0
+                local priorityB = oreList[b.Name] or 0
+                return priorityA > priorityB
+            end)
+            return getNextMiningOre(bool, distance, true)
         end
         return ores[1]
     end
@@ -495,14 +551,18 @@ do
         Callback = function(Value)
             while Toggles.AutoMineQuarry.Value do
                 task.wait()
-                local ore = getNextMiningOre()
+                local ore = getNextMiningOre(true, math.huge)
                 if ore then
                     highlight.Enabled = true
                     highlight.Parent = ore
                     task.spawn(function()
                         repeat
                             getgenv().isMiningQuarry = true
-                            player.Character.HumanoidRootPart.CFrame = ore.CFrame
+                            if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                                player.Character.HumanoidRootPart.CFrame = ore.CFrame
+                            else
+                                break
+                            end
                             task.wait()
                         until not ore or not ore.Parent or not Toggles.AutoMineQuarry.Value
                     end)
@@ -530,6 +590,8 @@ do
                             break
                         end
                     end
+                else
+                    player.Character.HumanoidRootPart.CFrame = CFrame.new(19.9446526, 7.64234638, 2525.29077, 0.999993265, -4.27085887e-08, -0.00367515767, 4.28989821e-08, 1, 5.17268433e-08, 0.00367515767, -5.18841539e-08, 0.999993265)
                 end
             end
         end
@@ -611,6 +673,7 @@ do
 
         Callback = function(value)
             getgenv().miningDepth = value
+            ores = {}
         end
     })
 end
@@ -1154,7 +1217,7 @@ do
                             break 
                         end
                     end 
-                    warn(ind)
+                    
                     events.FactoryUpgrade:FireServer(ind)
                     wait(.4)
                 end 
@@ -1185,7 +1248,7 @@ do
                             break 
                         end
                     end 
-                    warn(ind)
+                    
                     events.GemUpgrade:FireServer(ind)
                     wait(.4)
                 end 
@@ -1216,7 +1279,7 @@ do
                             break 
                         end
                     end 
-                    warn(ind)
+                    
                     events.UpgradeGemGrid:FireServer(ind)
                     wait(.4)
                 end 
@@ -1247,7 +1310,7 @@ do
                             break 
                         end
                     end 
-                    warn(ind)
+                    
                     events.OreUpgrade:FireServer(ind, 999)
                     wait(.4)
                 end 
@@ -1278,7 +1341,7 @@ do
                             break 
                         end
                     end 
-                    warn(ind)
+                    
                     events.RareDiamond:FireServer(ind)
                     wait(.4)
                 end 
@@ -1309,7 +1372,7 @@ do
                             break 
                         end
                     end 
-                    warn(ind)
+                    
                     events.OreUpgrade2:FireServer(ind, 1)
                     wait(.4)
                 end 
@@ -1340,7 +1403,7 @@ do
                             break 
                         end
                     end 
-                    warn(ind)
+                    
                     events.MiningUpgrades:FireServer(ind)
                     wait(.4)
                 end 
