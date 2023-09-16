@@ -392,43 +392,76 @@ do
     local oreList, stringOreList, totalOres = getOreList()
     
 
-    local function getDepth()
-        return math.abs(player.Character.HumanoidRootPart.Position.Y % 6)
+    local function getDepth(position)
+        return math.abs(math.floor(position.Y / 6))
+    end
+    if not getgenv().miningDepth then
+        getgenv().miningDepth = 100
     end
 
     local function getAllAttackableOres(ignoreStone, range)
         if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then
             return
         end
-        local ores = {}
-        local ore = nil
-        local distance = range and range or (18 + player.Stats.MiningUpgrade4.Value * 6)
+        
+        local attackableOres = {}
+        local targetOre = nil
+        local backupOre = nil
+        local lowestOre = nil
+        local lowestY = math.huge
+        local backupDistance = range or (18 + player.Stats.MiningUpgrade4.Value * 6)
+        local distance = range or (18 + player.Stats.MiningUpgrade4.Value * 6)
         local topY = -math.huge
-        for _,v in next, workspace.MineChunks:GetChildren() do 
-            for _,v in next, v:GetChildren() do
-                if v:IsA("BasePart") and v.Name ~= "Bedrock" and v:FindFirstChild("Health") and v.Health.Value > 0 then
+        local mineChunks = workspace.MineChunks:GetChildren()
+        
+        local rootPartPosition = player.Character.HumanoidRootPart.Position
+        local rootPartPositionY = rootPartPosition.Y
+        
+        for _, chunk in ipairs(mineChunks) do 
+            for _, ore in ipairs(chunk:GetChildren()) do
+                if ore:IsA("BasePart") and ore.Name ~= "Bedrock" and ore:FindFirstChild("Health") and ore.Health.Value > 0 then
+                    local orePosition = ore.Position
+                    local oreY = orePosition.Y
+                    local distanceToOre = (orePosition - rootPartPosition).Magnitude
+    
                     if not ignoreStone then
-                        local _dist = (v.Position - player.Character.HumanoidRootPart.Position).Magnitude
-                        local y = v.Position.Y
-                        if _dist <= distance and y > topY then
-                            ore = v
-                            topY = y
+                        if distance > 1000000 then
+                            if getDepth(rootPartPosition) < getgenv().miningDepth then
+                                if oreY < lowestY then
+                                    lowestOre = ore
+                                    lowestY = oreY
+                                end
+                            elseif getDepth(orePosition) >= getgenv().miningDepth and distanceToOre <= distance and oreY > topY then
+                                targetOre = ore
+                                topY = oreY
+                            end
+                        elseif distance < 10000 and oreY <= (rootPartPositionY - 3) and distanceToOre <= backupDistance then
+                            backupOre = ore
+                            backupDistance = distanceToOre
+                        elseif distance >= 10000 and oreY < topY then
+                            backupOre = ore
+                            topY = oreY
                         end
-                    elseif oreList[v.Name] then
-                        table.insert(ores, v)
+                    else
+                        if oreList[ore.Name] then
+                            table.insert(attackableOres, ore)
+                        end
                     end
                 end
             end
         end
+    
         if ignoreStone then
-            if #ores == 0 then
+            if #attackableOres == 0 then
                 return getAllAttackableOres(false, math.huge)
             end
-            return ores
+            return attackableOres
         end
-        warn(ore)
-        return {ore}
+    
+        return {lowestOre or targetOre or backupOre}
     end
+    
+    
 
 
 
@@ -480,14 +513,16 @@ do
                                 if ore.Health.Value ~= health then
                                     health = ore.Health.Value
                                 elseif tick() - t > 1 then
+                                    highlight.Parent = game:GetService("CoreGui")
+                                    highlight.Enabled = false
+                                    ore:Destroy()
                                     break
                                 end
                             end
                             wait()
                         until not ore.Parent or not Toggles.AutoMineQuarry.Value
                         table.remove(ores, table.find(ores, ore))
-                        highlight.Parent = game:GetService("CoreGui")
-                        highlight.Enabled = false
+                        
                         getgenv().isMiningQuarry = false
                         if not Toggles.AutoMineQuarry.Value then
                             break
@@ -560,6 +595,20 @@ do
                     end
                 end
             end
+        end
+    })
+
+    QuarryLeftBox:AddSlider('Depth', {
+        Text = 'Mining Depth',
+        Default = 100,
+        Min = 0,
+        Max = 7000,
+        Rounding = 0,
+        Compact = false,
+        HideMax = true, 
+
+        Callback = function(value)
+            getgenv().miningDepth = value
         end
     })
 end
