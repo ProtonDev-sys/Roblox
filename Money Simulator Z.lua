@@ -465,7 +465,6 @@ do
             found = true
             break
         end
-        warn(found)
         if not found and not rec then
             ores = getAllAttackableOres(bool, distance, true)
             table.sort(ores, function(a,b)
@@ -473,7 +472,7 @@ do
                 local priorityB = oreList[b.Name] or 0
                 return priorityA > priorityB
             end)
-            return getNextMiningOre(bool, distance, rec)
+            return getNextMiningOre(bool, distance, true)
         end
         return ores[1]
     end
@@ -578,7 +577,7 @@ do
             while Toggles.AutoMineQuarryLegit.Value do
                 repeat task.wait() until not getgenv().isMiningQuarry
                 task.wait()
-                local ore = getNextMiningOre(true)
+                local ore = getNextMiningOre(false)
                 if not Toggles.AutoMineQuarry.Value then
                     if ore and (ore.Position - player.Character.HumanoidRootPart.Position).Magnitude <= (18 + player.Stats.MiningUpgrade4.Value * 6) and not getgenv().isMiningQuarry then
                         highlight.Parent = ore
@@ -1447,3 +1446,6 @@ SaveManager:BuildConfigSection(Tabs['UI Settings'])
 ThemeManager:ApplyToTab(Tabs['UI Settings'])
 
 SaveManager:LoadAutoloadConfig()
+
+
+
