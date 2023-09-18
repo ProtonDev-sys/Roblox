@@ -591,38 +591,6 @@ do
         end
     })
 
-
-   
-    QuarryLeftBox:AddToggle('AutoMineQuarryLegit', {
-        Text = 'Mine Aura Quarry',
-        Default = false,
-        Tooltip = 'Automatically mines quarry for you.',
-
-        Callback = function(Value)
-            while Toggles.AutoMineQuarryLegit.Value do
-                repeat task.wait() until not getgenv().isMiningQuarry
-                task.wait()
-                local ore = getNextMiningOre(false)
-                if not Toggles.AutoMineQuarry.Value then
-                    if ore and (ore.Position - player.Character.HumanoidRootPart.Position).Magnitude <= (18 + player.Stats.MiningUpgrade4.Value * 6) and not getgenv().isMiningQuarry then
-                        highlight.Parent = ore
-                        highlight.Enabled = true
-                        repeat
-                            game:GetService("ReplicatedStorage").Events.Mine:FireServer(ore)
-                            wait()
-                        until not ore or not ore.Parent or not Toggles.AutoMineQuarryLegit.Value or getgenv().isMiningQuarry or not ((ore.Position - player.Character.HumanoidRootPart.Position).Magnitude < 10 )
-                        table.remove(ores, table.find(ores, ore))
-                        highlight.Parent = game:GetService("CoreGui")
-                        highlight.Enabled = false
-                        if not Toggles.AutoMineQuarryLegit.Value then
-                            break
-                        end
-                    end
-                end
-            end
-        end
-    })
-
     QuarryLeftBox:AddSlider('Depth', {
         Text = 'Mining Depth',
         Default = 100,
@@ -1471,6 +1439,7 @@ SaveManager:BuildConfigSection(Tabs['UI Settings'])
 ThemeManager:ApplyToTab(Tabs['UI Settings'])
 
 SaveManager:LoadAutoloadConfig()
+
 
 
 
