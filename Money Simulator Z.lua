@@ -355,7 +355,7 @@ local QuarryLeftBox = Tabs.Mining:AddLeftGroupbox('Quarry')
 local MiningRightBox = Tabs.Mining:AddRightGroupbox('Crafting')
 
 do
-
+    local ores = {}
     local function getOreList()
         local stringOreList = {}
         
@@ -399,6 +399,33 @@ do
         getgenv().miningDepth = 100
     end
 
+    for _, child in next, workspace.MineChunks:GetChildren() do
+        child.ChildAdded:Connect(function(child)
+            if oreList[child.Name] then
+                table.insert(ores, child)
+                table.sort(ores, function(a,b)
+                    local priorityA = oreList[a.Name] or 0
+                    local priorityB = oreList[b.Name] or 0
+                    return priorityA > priorityB
+                end)
+            end
+        end)
+    end
+
+    workspace.MineChunks.ChildAdded:Connect(function(child)
+        wait()
+        child.ChildAdded:Connect(function(child)
+            if oreList[child.Name] then
+                table.insert(ores, child)
+                table.sort(ores, function(a,b)
+                    local priorityA = oreList[a.Name] or 0
+                    local priorityB = oreList[b.Name] or 0
+                    return priorityA > priorityB
+                end)
+            end
+        end)
+    end)
+
     local function getAllAttackableOres(ignoreStone, range, enforceDepth)
         if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then
             return
@@ -432,6 +459,7 @@ do
                 end
             end
         end
+        
         if not ignoreStone and #attackableOres == 0 and range == math.huge and enforceDepth then
             local lowestY = math.huge
             local lowestOre = nil
@@ -439,7 +467,7 @@ do
                 for _, ore in ipairs(chunk:GetChildren()) do
                     local orePosition = ore.Position
                     local oreY = orePosition.Y
-                    if oreY < lowestY then
+                    if oreY < lowestY and ore.Name ~= "Bedrock" then
                         lowestY = oreY
                         lowestOre = ore
                     end
@@ -454,11 +482,6 @@ do
         return attackableOres
     end
     
-    
-
-
-
-    local ores = {}
     local function getNextMiningOre(bool, distance, rec)
         local found = false
         for _,v in next, ores do
