@@ -1,7 +1,7 @@
-if getgenv().useKeySystem then
-	loadstring(game:HttpGet("https://raw.githubusercontent.com/ProtonDev-sys/Roblox/main/linkvertise.lua"))()
+if not getgenv().ignoreKeySystem then
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/ProtonDev-sys/Roblox/main/linkvertise.lua"))()
 end
-local repo = 'https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/'
+    local repo = 'https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/'
 
 local Library = loadstring(game:HttpGet(repo .. 'Library.lua'))()
 local ThemeManager = loadstring(game:HttpGet(repo .. 'addons/ThemeManager.lua'))()
@@ -66,7 +66,7 @@ FactoryLeftBox:AddToggle('BoostGems', {
     Callback = function(Value)
         while Toggles.BoostGems.Value do 
             wait() 
-            for _,v in next, game:GetService("Workspace").Factory.Gems:GetChildren() do 
+            for _,v in next, game:GetService("Workspace").Factory.Gems:GetChildren() do
                 fireclickdetector(v.ClickDetector)
             end
         end
@@ -337,14 +337,11 @@ FactoryRightBox:AddToggle("BuyMachines", {
     Callback = function(value)
         while Toggles.BuyMachines.Value do 
             wait() 
-            for i = 1 , 5 , 1 do 
-                if player.Stats["FactoryUpgrade"..tostring(i)].Value < factoryUpgradeLimits[i] then
-                    events.BuyMachine:FireServer(i,true)
-                    events.BuyMoreMachines:FireServer(i,2,true)
-                    
-                    wait(.5)
-                end
+            for i = 1 , 10 , 1 do 
+                events.BuyMachine:FireServer(i,true)
+                events.BuyMoreMachines:FireServer(i,2,true)
             end
+            wait(.5)
         end
     end
 })
@@ -591,22 +588,22 @@ do
         end
     })
 
-    QuarryLeftBox:AddSlider('Depth', {
-        Text = 'Mining Depth',
-        Default = 100,
-        Min = 0,
-        Max = 1000,
-        Rounding = 0,
-        Compact = false,
-        HideMax = true, 
 
-        Callback = function(value)
-            getgenv().miningDepth = value
-            ores = {}
+    QuarryLeftBox:AddInput('DepthTextbox', {
+        Default = '100',
+        Numeric = true, 
+        Finished = false, 
+
+        Text = 'Depth',
+        Tooltip = 'The depth to mine at!',
+
+        Placeholder = 'e.g 100',
+
+        Callback = function(Value)
+            getgenv().miningDepth = tonumber(value)
         end
     })
 end
-
 
 function getNextOre()
     local ores = {}
@@ -1439,7 +1436,6 @@ SaveManager:BuildConfigSection(Tabs['UI Settings'])
 ThemeManager:ApplyToTab(Tabs['UI Settings'])
 
 SaveManager:LoadAutoloadConfig()
-
 
 
 
