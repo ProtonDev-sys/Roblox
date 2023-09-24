@@ -599,7 +599,7 @@ do
 
         Placeholder = 'e.g 100',
 
-        Callback = function(Value)
+        Callback = function(value)
             getgenv().miningDepth = tonumber(value)
         end
     })
