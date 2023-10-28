@@ -24,7 +24,7 @@ end
 
 Iris:Connect(function()
   if not Verified then
-    Iris.Window({"Generic Key - Key System", [Iris.Args.Window.NoClose] = true, [Iris.Args.Window.NoResize] = true, [Iris.Args.Window.NoScrollbar] = true, [Iris.Args.Window.NoCollapse] = true}, {size = Iris.State(Vector2.new(175, 75))}) do
+    Iris.Window({"https://mikecash.co/key/Proton", [Iris.Args.Window.NoClose] = true, [Iris.Args.Window.NoResize] = true, [Iris.Args.Window.NoScrollbar] = true, [Iris.Args.Window.NoCollapse] = true}, {size = Iris.State(Vector2.new(175, 75))}) do
       Key = Iris.InputText({"", [Iris.Args.InputText.TextHint] = "Your key here."}, {value = Iris.State(Key)}).text.value
         if Iris.Button({"Check key"}).clicked then
           if CanPress then
