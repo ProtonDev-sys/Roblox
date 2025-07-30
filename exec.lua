@@ -1,4 +1,4 @@
--- Collect tables returned by ModuleScripts and copy one big dump to clipboard
+-- Collect tables returned by ModuleScripts and write one big dump to a file
 local root = game.ReplicatedStorage.Collection.Item
 
 -- Pretty, cycle-safe serializer that produces a Lua-ish dump
@@ -77,11 +77,56 @@ end
 local dump = ("-- Dump generated on %s UTC\nreturn %s")
 	:format(os.date("!%Y-%m-%d %H:%M:%S"), serialize(collected))
 
--- Copy once at the end
-if typeof(setclipboard) == "function" then
-	setclipboard(dump)
-	print(("Copied %d characters to clipboard."):format(#dump))
+-- ---- Save to file instead of clipboard ----
+local function ensureFolder(path)
+	local isfolderFn = rawget(getfenv(0), "isfolder")
+	local makefolderFn = rawget(getfenv(0), "makefolder")
+	if isfolderFn and makefolderFn then
+		if not isfolderFn(path) then
+			pcall(makefolderFn, path)
+		end
+	end
+end
+
+local function writeBigFile(path, content)
+	-- Try writefile first
+	if typeof(writefile) == "function" then
+		local ok, err = pcall(writefile, path, content)
+		if ok then return true end
+
+		-- If writefile fails (e.g., size limits), fall back to chunked append
+		if typeof(appendfile) == "function" then
+			-- best-effort clear (some executors overwrite; others require removal)
+			pcall(writefile, path, "")
+			local CHUNK = 200000 -- 200 KB chunks; adjust up/down if needed
+			local i = 1
+			while i <= #content do
+				local j = math.min(i + CHUNK - 1, #content)
+				local ok2 = pcall(appendfile, path, content:sub(i, j))
+				if not ok2 then
+					return false
+				end
+				i = j + 1
+			end
+			return true
+		else
+			warn("writefile failed and no appendfile() available: " .. tostring(err))
+			return false
+		end
+	else
+		warn("writefile() is not available in this environment.")
+		return false
+	end
+end
+
+local folder = "dumps"
+ensureFolder(folder)
+local filename = string.format("%s/dump-%s.lua", folder, os.date("!%Y-%m-%d_%H-%M-%S"))
+
+local saved = writeBigFile(filename, dump)
+if saved then
+	print(string.format("Wrote %s (%d chars).", filename, #dump))
 else
-	warn("setclipboard() isn't available in this environment; printing instead:")
-	print(dump)
+	warn("Failed to write dump; printing a preview below (first 1000 chars):")
+	print(dump:sub(1, 1000))
 end
