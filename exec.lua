@@ -77,11 +77,8 @@ end
 local dump = ("-- Dump generated on %s UTC\nreturn %s")
 	:format(os.date("!%Y-%m-%d %H:%M:%S"), serialize(collected))
 
--- ---- Save to file (prints when written) ----
-local OUTPUT_PATH = ("dump-%s.lua"):format(os.date("!%Y-%m-%d_%H-%M-%S"))
-
 local ok, err = pcall(function()
-	writefile(OUTPUT_PATH, dump) -- <void> writefile(<string> path, <string> content)
+	writefile("dump.txt", dump) -- <void> writefile(<string> path, <string> content)
 end)
 
 if ok then
