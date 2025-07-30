@@ -77,56 +77,15 @@ end
 local dump = ("-- Dump generated on %s UTC\nreturn %s")
 	:format(os.date("!%Y-%m-%d %H:%M:%S"), serialize(collected))
 
--- ---- Save to file instead of clipboard ----
-local function ensureFolder(path)
-	local isfolderFn = rawget(getfenv(0), "isfolder")
-	local makefolderFn = rawget(getfenv(0), "makefolder")
-	if isfolderFn and makefolderFn then
-		if not isfolderFn(path) then
-			pcall(makefolderFn, path)
-		end
-	end
-end
+-- ---- Save to file (prints when written) ----
+local OUTPUT_PATH = ("dump-%s.lua"):format(os.date("!%Y-%m-%d_%H-%M-%S"))
 
-local function writeBigFile(path, content)
-	-- Try writefile first
-	if typeof(writefile) == "function" then
-		local ok, err = pcall(writefile, path, content)
-		if ok then return true end
+local ok, err = pcall(function()
+	writefile(OUTPUT_PATH, dump) -- <void> writefile(<string> path, <string> content)
+end)
 
-		-- If writefile fails (e.g., size limits), fall back to chunked append
-		if typeof(appendfile) == "function" then
-			-- best-effort clear (some executors overwrite; others require removal)
-			pcall(writefile, path, "")
-			local CHUNK = 200000 -- 200 KB chunks; adjust up/down if needed
-			local i = 1
-			while i <= #content do
-				local j = math.min(i + CHUNK - 1, #content)
-				local ok2 = pcall(appendfile, path, content:sub(i, j))
-				if not ok2 then
-					return false
-				end
-				i = j + 1
-			end
-			return true
-		else
-			warn("writefile failed and no appendfile() available: " .. tostring(err))
-			return false
-		end
-	else
-		warn("writefile() is not available in this environment.")
-		return false
-	end
-end
-
-local folder = "dumps"
-ensureFolder(folder)
-local filename = string.format("%s/dump-%s.lua", folder, os.date("!%Y-%m-%d_%H-%M-%S"))
-
-local saved = writeBigFile(filename, dump)
-if saved then
-	print(string.format("Wrote %s (%d chars).", filename, #dump))
+if ok then
+	print(("%s written (%d chars)."):format(OUTPUT_PATH, #dump))
 else
-	warn("Failed to write dump; printing a preview below (first 1000 chars):")
-	print(dump:sub(1, 1000))
+	warn("Failed to write file: " .. tostring(err))
 end
